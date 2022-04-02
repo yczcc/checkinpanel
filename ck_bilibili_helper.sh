@@ -9,7 +9,7 @@ COMMENT
 if [ -f "$(dirname "$0")/utils_env.sh" ]; then
     source "$(dirname "$0")/utils_env.sh"
 else
-    wget -q -O utils_env.sh https://github.do/https://raw.githubusercontent.com/Oreomeow/checkinpanel/master/utils_env.sh
+    wget -q -O utils_env.sh https://github.do/https://raw.githubusercontent.com/yczcc/checkinpanel/master/utils_env.sh
     source "$(dirname "$0")/utils_env.sh"
 fi
 get_some_path
@@ -31,7 +31,7 @@ else
 fi
 echo "当前版本:"$VERSION
 
-latest=$(curl -s https://api.github.com/repos/Oreomeow/bili/releases/latest)
+latest=$(curl -s https://api.github.com/repos/yczcc/bili/releases/latest)
 latest_VERSION=$(echo "$latest" | jq '.tag_name' | sed 's/v\|"//g')
 echo "最新版本:""$latest_VERSION"
 download_url=$(echo "$latest" | jq '.assets[0].browser_download_url' | sed 's/"//g')

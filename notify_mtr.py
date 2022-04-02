@@ -545,6 +545,8 @@ def send(title: str, content: str) -> None:
     text = one() if hitokoto else ""
     content += "\n\n" + text
 
+    content = content.rstrip()
+
     ts = [
         threading.Thread(target=mode, args=(title, content), name=mode.__name__)
         for mode in notify_function

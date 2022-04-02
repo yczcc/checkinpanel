@@ -1,13 +1,13 @@
 /*
  * @Author: lxk0301 https://gitee.com/lxk0301
  * @Date: 2020-08-19 16:12:40
- * @Last Modified by: Oreomeow
+ * @Last Modified by: yczcc
  * @Last Modified time: 2021-11-8 23:30:00
  * sendNotify 推送通知功能
  * @param text 通知头
  * @param desp 通知体
  * @param params 某些推送通知方式点击弹窗可跳转，例：{ url: 'https://abc.com' }
- * @param author 作者仓库等信息 例：`本通知 By：https://github.com/Oreomeow/checkinpanel`
+ * @param author 作者仓库等信息 例：`本通知 By：https://github.com/yczcc/checkinpanel`
  */
 
 const querystring = require('querystring');
@@ -119,10 +119,10 @@ if (!PushConfig.TG_API_HOST) {
  * @param text 通知头
  * @param desp 通知体
  * @param params 某些推送通知方式点击弹窗可跳转，例：{ url: 'https://abc.com' }
- * @param author 作者仓库等信息 例：`本通知 By：https://github.com/Oreomeow/checkinpanel`
+ * @param author 作者仓库等信息 例：`本通知 By：https://github.com/yczcc/checkinpanel`
  * @returns {Promise<unknown>}
  */
-async function sendNotify(text, desp, params = {}, author = '\n\nGitHub: https://github.com/Oreomeow/checkinpanel') {
+async function sendNotify(text, desp, params = {}, author = '\n\nGitHub: https://github.com/yczcc/checkinpanel') {
     // 提供 7 种通知
     desp += author; // 增加作者信息，防止被贩卖等
     await Promise.all([
@@ -467,7 +467,7 @@ function qywxamNotify(text, desp) {
                             textcard: {
                                 title: `${text}`,
                                 description: `${desp}`,
-                                url: 'https://github.com/Oreomeow/checkinpanel',
+                                url: 'https://github.com/yczcc/checkinpanel',
                                 btntxt: '更多',
                             },
                         };

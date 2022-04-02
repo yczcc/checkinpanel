@@ -15,12 +15,12 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Oreomeow/checkinpanel.git"
+        "url": "git+https://github.com/yczcc/checkinpanel.git"
     },
-    "author": "Oreomeow",
+    "author": "yczcc",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/Oreomeow/checkinpanel/issues"
+        "url": "https://github.com/yczcc/checkinpanel/issues"
     },
-    "homepage": "https://github.com/Oreomeow/checkinpanel#readme"
+    "homepage": "https://github.com/yczcc/checkinpanel#readme"
 }

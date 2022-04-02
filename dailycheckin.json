@@ -20,7 +20,7 @@
             "time": "10",
             "job": {
                 "type": "exec",
-                "target": "git clone https://ghproxy.com/https://github.com/Oreomeow/checkinpanel -cwd script/Shell"
+                "target": "git clone https://ghproxy.com/https://github.com/yczcc/checkinpanel -cwd script/Shell"
             },
             "running": true
         },
@@ -100,7 +100,7 @@
             "time": "0",
             "job": {
                 "type": "exec",
-                "target": "wget https://ghproxy.com/https://raw.githubusercontent.com/Oreomeow/checkinpanel/master/checkinjs.js -O checkinjs.js -cwd script/JSFile"
+                "target": "wget https://ghproxy.com/https://raw.githubusercontent.com/yczcc/checkinpanel/master/checkinjs.js -O checkinjs.js -cwd script/JSFile"
             },
             "running": true
         },
@@ -110,7 +110,7 @@
             "time": "0",
             "job": {
                 "type": "exec",
-                "target": "wget https://ghproxy.com/https://raw.githubusercontent.com/Oreomeow/checkinpanel/master/checkin.js -O checkin.js -cwd script/JSFile"
+                "target": "wget https://ghproxy.com/https://raw.githubusercontent.com/yczcc/checkinpanel/master/checkin.js -O checkin.js -cwd script/JSFile"
             },
             "running": true
         },
@@ -120,7 +120,7 @@
             "time": "0",
             "job": {
                 "type": "exec",
-                "target": "wget https://ghproxy.com/https://raw.githubusercontent.com/Oreomeow/checkinpanel/master/checkinsh.js -O checkinsh.js -cwd script/JSFile"
+                "target": "wget https://ghproxy.com/https://raw.githubusercontent.com/yczcc/checkinpanel/master/checkinsh.js -O checkinsh.js -cwd script/JSFile"
             },
             "running": true
         },

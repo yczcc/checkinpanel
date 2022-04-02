@@ -16,7 +16,7 @@ from utils import get_data
 class EcardCheck:
     @staticmethod
     def get_ua(brower_name):
-        url = "https://ghproxy.com/https://raw.githubusercontent.com/Oreomeow/checkinpanel/master/user-agent.json"
+        url = "https://ghproxy.com/https://raw.githubusercontent.com/yczcc/checkinpanel/master/user-agent.json"
         useragent = choice(requests.get(url).json()[brower_name])
         return useragent
 

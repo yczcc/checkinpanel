@@ -5,15 +5,15 @@
 
 ### Feature
 
-* :racehorse: : 新增推送天数限制自定义：rssbot. [Oreomeow]
+* :racehorse: : 新增推送天数限制自定义：rssbot. [yczcc]
 
 * :sparkles: : 更新葫芦侠脚本 #69. [Oreo]
 
 ### Fix
 
-* :bug: : 修复在线工具签到地址. [Oreomeow]
+* :bug: : 修复在线工具签到地址. [yczcc]
 
-* :bug: : 修复时间格式错误：rssbot. [Oreomeow]
+* :bug: : 修复时间格式错误：rssbot. [yczcc]
 
 * :bug: : fix sre24 push domain (#102) [Tony]
 
@@ -23,18 +23,18 @@
 
 ### Docs
 
-* :memo: : 更新测试情况 失效脚本数量较多，暂不更新. [Oreomeow]
+* :memo: : 更新测试情况 失效脚本数量较多，暂不更新. [yczcc]
 
-* :memo: : 调整 CHANGELOG 和 tag. [Oreomeow]
+* :memo: : 调整 CHANGELOG 和 tag. [yczcc]
 
   以大版本号为界打 tag
   当前版本以月为界，当月第一次更新时打 tag
 
 ### Code Style
 
-* :zap: : 分批发送：rssbot. [Oreomeow]
+* :zap: : 分批发送：rssbot. [yczcc]
 
-* :building_construction: 更改名称和 rss.db 位置：api_rssbot 1. 上线 elecV2P 2. qinglong 或 elecV2P 根据脚本提示移动 rss.db 位置. [Oreomeow]
+* :building_construction: 更改名称和 rss.db 位置：api_rssbot 1. 上线 elecV2P 2. qinglong 或 elecV2P 根据脚本提示移动 rss.db 位置. [yczcc]
 
 * :zap: : 改进 hax 正则. [Oreo]
 
@@ -56,7 +56,7 @@
     dependency-type: indirect
   ...
 
-* :see_no_evil: 更新 .gitignore 修改排序并增加 rss.db. [Oreomeow]
+* :see_no_evil: 更新 .gitignore 修改排序并增加 rss.db. [yczcc]
 
 
 ## 20220129-4-100 (2022-02-02)
@@ -285,7 +285,7 @@
 
 * :sparkles: : 新增爱企查e卡监控. [Oreo]
 
-* :sparkles: : 增加一个新的推送文件。 https://github.com/Oreomeow/checkinpanel/issues/25. [night-raise]
+* :sparkles: : 增加一个新的推送文件。 https://github.com/yczcc/checkinpanel/issues/25. [night-raise]
 
   1. 可以不需要 json5 依赖，那么配置必须符合 json 格式。
   2. 可以不提供 json 配置，通过环境变量指定推送情况。

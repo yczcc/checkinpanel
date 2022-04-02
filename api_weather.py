@@ -32,7 +32,7 @@ class Weather:
                 if not city_map:
                     raise FileNotFoundError
         except FileNotFoundError:
-            resp = requests.get("https://fastly.jsdelivr.net/gh/Oreomeow/checkinpanel@master/city.json")
+            resp = requests.get("https://fastly.jsdelivr.net/gh/yczcc/checkinpanel@master/city.json")
             if resp.status_code == 200:
                 city_map = resp.json()
                 with open(

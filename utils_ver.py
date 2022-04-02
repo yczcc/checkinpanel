@@ -17,7 +17,7 @@ def get_present_ver() -> str:
 
 def get_latest_ver() -> str:
     global ONLINE_VERSION, ver_re
-    url = "https://ghproxy.com/https://raw.githubusercontent.com/Oreomeow/checkinpanel/master/utils_ver.py"
+    url = "https://ghproxy.com/https://raw.githubusercontent.com/yczcc/checkinpanel/master/utils_ver.py"
     if ONLINE_VERSION:
         return f"最新版本：{ONLINE_VERSION}"
     if time.localtime().tm_hour < 8 or time.localtime().tm_hour > 12:

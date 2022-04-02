@@ -127,7 +127,7 @@ install_pl_mods() {
             else
                 cp -f /ql/repo/Oreomeow_checkinpanel_master/cpm ./ && chmod +x cpm && ./cpm --version
                 if [ ! -f ./cpm ]; then
-                    curl -fsSL https://cdn.jsdelivr.net/gh/Oreomeow/checkinpanel/cpm >cpm && chmod +x cpm && ./cpm --version
+                    curl -fsSL https://cdn.jsdelivr.net/gh/yczcc/checkinpanel/cpm >cpm && chmod +x cpm && ./cpm --version
                 fi
             fi
         fi
