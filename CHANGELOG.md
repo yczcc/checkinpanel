@@ -1,19 +1,64 @@
 # Changelog
 
 
+## 20220327-4-010 (2022-03-27)
+
+### Fix
+
+* :bug: : 临时关闭随机定时功能。 [night-raise]
+
+* :fire: : rm some scripts config. [Oreomeow]
+
+* :fire: : 移除部分脚本. [Oreomeow]
+
+  考虑到维护和调试成本，不再维护视频网站脚本等
+
+* :bug: : 修复知乎推送过多的问题. [night-raise]
+
+* :bug: : 更换无用代理：bili. [Oreomeow]
+
+* :bug: : 修正 CCAVA 类命名错误. [Oreomeow]
+
+### Code Style
+
+* :building_construction: 重构 hax. [Oreomeow]
+
+### Refactor Functions
+
+* :hammer: : 进一步降低 rss bot 的推送数量. [night-raise]
+
+* :hammer: : 移除 rss bot 的日期格式. [night-raise]
+
+  新增加了一些 rss 订阅链接，需要将 rss.simple.db 拷贝到 rss.db
+
+* :hammer: : 修复重复拉取问题. [Oreomeow]
+
+* :hammer: : 修复 acfun. [Oreomeow]
+
+### Other
+
+* :alien: : 青龙面板(v2.12.0+) 适配。 [night-raise]
+
+  修正插入 rss 的 sql
+
+* :alien: : 增加 青龙面板(v2.12.0+) 适配。 [Oreomeow]
+
+* :arrow_down: 降低 got 版本以兼容. [Oreomeow]
+
+
 ## 20220226-4-020 (2022-02-26)
 
 ### Feature
 
-* :racehorse: : 新增推送天数限制自定义：rssbot. [yczcc]
+* :racehorse: : 新增推送天数限制自定义：rssbot. [Oreomeow]
 
 * :sparkles: : 更新葫芦侠脚本 #69. [Oreo]
 
 ### Fix
 
-* :bug: : 修复在线工具签到地址. [yczcc]
+* :bug: : 修复在线工具签到地址. [Oreomeow]
 
-* :bug: : 修复时间格式错误：rssbot. [yczcc]
+* :bug: : 修复时间格式错误：rssbot. [Oreomeow]
 
 * :bug: : fix sre24 push domain (#102) [Tony]
 
@@ -23,18 +68,18 @@
 
 ### Docs
 
-* :memo: : 更新测试情况 失效脚本数量较多，暂不更新. [yczcc]
+* :memo: : 更新测试情况 失效脚本数量较多，暂不更新. [Oreomeow]
 
-* :memo: : 调整 CHANGELOG 和 tag. [yczcc]
+* :memo: : 调整 CHANGELOG 和 tag. [Oreomeow]
 
   以大版本号为界打 tag
   当前版本以月为界，当月第一次更新时打 tag
 
 ### Code Style
 
-* :zap: : 分批发送：rssbot. [yczcc]
+* :zap: : 分批发送：rssbot. [Oreomeow]
 
-* :building_construction: 更改名称和 rss.db 位置：api_rssbot 1. 上线 elecV2P 2. qinglong 或 elecV2P 根据脚本提示移动 rss.db 位置. [yczcc]
+* :building_construction: 更改名称和 rss.db 位置：api_rssbot 1. 上线 elecV2P 2. qinglong 或 elecV2P 根据脚本提示移动 rss.db 位置. [Oreomeow]
 
 * :zap: : 改进 hax 正则. [Oreo]
 
@@ -56,7 +101,7 @@
     dependency-type: indirect
   ...
 
-* :see_no_evil: 更新 .gitignore 修改排序并增加 rss.db. [yczcc]
+* :see_no_evil: 更新 .gitignore 修改排序并增加 rss.db. [Oreomeow]
 
 
 ## 20220129-4-100 (2022-02-02)
@@ -285,7 +330,7 @@
 
 * :sparkles: : 新增爱企查e卡监控. [Oreo]
 
-* :sparkles: : 增加一个新的推送文件。 https://github.com/yczcc/checkinpanel/issues/25. [night-raise]
+* :sparkles: : 增加一个新的推送文件。 https://github.com/Oreomeow/checkinpanel/issues/25. [night-raise]
 
   1. 可以不需要 json5 依赖，那么配置必须符合 json 格式。
   2. 可以不提供 json 配置，通过环境变量指定推送情况。
