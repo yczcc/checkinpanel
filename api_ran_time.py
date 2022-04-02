@@ -77,7 +77,7 @@ class QLClient(ClientApi):
 
     def init_cron(self):
         self.cron: List[Dict] = list(filter(lambda x: not x.get("isDisabled", 1) and
-                                                      x.get("command", "").find("Oreomeow_checkinpanel_master") != -1,
+                                                      x.get("command", "").find("yczcc_checkinpanel_master") != -1,
                                             requests.get(url=self.url + "open/crons",
                                                          headers={"Authorization": f"Bearer {self.token}"}).json()[
                                                 "data"]))

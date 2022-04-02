@@ -217,7 +217,7 @@ console.log(taskinfo);
       type: 'sub',
       job: {
         type: 'replace',
-        target: 'https://raw.githubusercontent.com/Oreomeow/VIP/main/Tasks/News.json'
+        target: 'https://raw.githubusercontent.com/yczcc/VIP/main/Tasks/News.json'
       },
       update_type: 'none'
     },

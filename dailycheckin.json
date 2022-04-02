@@ -80,7 +80,7 @@
             "time": "0 0 */7 * *",
             "job": {
                 "type": "runjs",
-                "target": "https://ghproxy.com/https://raw.githubusercontent.com/Oreomeow/checkinpanel/master/checkin_ran.js"
+                "target": "https://ghproxy.com/https://raw.githubusercontent.com/yczcc/checkinpanel/master/checkin_ran.js"
             },
             "running": true
         },

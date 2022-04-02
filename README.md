@@ -176,13 +176,13 @@ ql repo https://github.com/yczcc/checkinpanel.git "api_|ck_|ins_" "^checkin" "^n
 ### 4. 拷贝文件
 
 ```sh
-cp /ql/repo/Oreomeow_checkinpanel_master/check.sample.toml /ql/config/check.toml
+cp /ql/repo/yczcc_checkinpanel_master/check.sample.toml /ql/config/check.toml
 ```
 
 *通知配置文件（可选）*
 
 ```sh
-cp /ql/repo/Oreomeow_checkinpanel_master/notify.sample.toml /ql/config/notify.toml
+cp /ql/repo/yczcc_checkinpanel_master/notify.sample.toml /ql/config/notify.toml
 ```
 
 ### 5. 配置通知
