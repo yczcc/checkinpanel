@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-:author @night-raise  from github
+:author @yczcc from github
 cron: 0 0 */7 * *
 new Env('随机定时');
 """
@@ -15,6 +15,8 @@ from notify_mtr import send
 from utils import get_data
 from utils_env import get_env_int
 
+import time
+import traceback
 
 class ClientApi(ABC):
     def __init__(self):
@@ -33,7 +35,7 @@ class ClientApi(ABC):
 
     def run(self):
         self.init_cron()
-        self.shuffle_cron()
+        return self.shuffle_cron()
 
     @staticmethod
     def get_ran_min() -> str:
@@ -70,30 +72,45 @@ class QLClient(ClientApi):
             self.sct = sct
         self.url = client_info.get("url", "http://localhost:5700").rstrip("/") + "/"
         self.twice = client_info.get("twice", False)
+        self.repo = client_info.get("repo", "")
+        if len(self.repo) < 1:
+            raise ValueError("必须指定repo")
+        self.exclude = client_info.get("exclude", "")
         self.token = requests.get(url=self.url + "open/auth/token",
                                   params={"client_id": self.cid, "client_secret": self.sct}).json()["data"]["token"]
         if not self.token:
             raise KeyError
 
     def init_cron(self):
-        self.cron: List[Dict] = list(filter(lambda x: not x.get("isDisabled", 1) and
-                                                      x.get("command", "").find("yczcc_checkinpanel_master") != -1,
-                                            requests.get(url=self.url + "open/crons",
-                                                         headers={"Authorization": f"Bearer {self.token}"}).json()[
-                                                "data"]))
+        time_now = int(round(time.time() * 1000))
+        has_exclude = False
+        if len(self.exclude) > 0:
+            has_exclude = True
+        self.cron: List[Dict] = list(
+            filter(lambda x: not x.get("isDisabled", 1)
+                             and x.get("command", "").find(self.repo) != -1
+                             and ((has_exclude and x.get("command", "").find(self.exclude) == -1) or (not has_exclude)),
+                   requests.get(url=self.url + "open/crons?searchValue=" + self.repo + "&t=" + str(time_now),
+                                headers={"Authorization": f"Bearer {self.token}"}).json()["data"]))
 
     def shuffle_cron(self):
+        total = 0
+        success = 0
         for c in self.cron:
-            data = {
-                "labels": c.get("labels", None),
-                "command": c["command"],
-                "schedule": self.random_time(c["schedule"], c["command"]),
-                "name": c["name"],
-                "id": c["id"],
-            }
-            requests.put(url=self.url + "open/crons",
-                         data=data,
-                         headers={"Authorization": f"Bearer {self.token}"})
+            total += 1
+            if 'schedule' in c:
+                data = {
+                    "_id": c["_id"],
+                    "name": c["name"],
+                    "command": c["command"],
+                    "schedule": self.random_time(c["schedule"], c["command"]),
+                }
+                res = requests.put(url=self.url + "open/crons",
+                                   data=data,
+                                   headers={"Authorization": f"Bearer {self.token}"}).json()
+                if 'code' in res and 200 == res['code']:
+                    success += 1
+        return [total, success]
 
 
 def get_client():
@@ -103,10 +120,18 @@ def get_client():
         return QLClient(check_data.get("RANDOM", [[]])[0])
 
 
+msg = "null"
 try:
-    get_client().run()
-    send("随机定时", "处于启动状态的任务定时修改成功！")
+    res = get_client().run()
+    msg = "处于启动状态的任务定时修改完成！总计：" + str(res[0]) + "个， 成功：" + str(res[1]) + "个。"
+except ValueError as e:
+    msg = "配置错误：" + str(e) + "，请检查你的配置文件！"
+    traceback.print_exc()
 except KeyError:
-    send("随机定时", "配置错误，请检查你的配置文件！")
+    msg = "配置错误，请检查你的配置文件！"
+    traceback.print_exc()
 except AttributeError:
-    send("随机定时", "你的系统不支持运行随机定时！")
+    msg = "你的系统不支持运行随机定时！"
+    traceback.print_exc()
+# print(msg)
+send("随机定时", msg)
