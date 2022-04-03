@@ -66,7 +66,7 @@ class QLClient(ClientApi):
         super().__init__()
         if not client_info or not (cid := client_info.get("client_id")) or not (
                 sct := client_info.get("client_secret")):
-            raise KeyError
+            raise ValueError("无法获取client相关参数")
         else:
             self.cid = cid
             self.sct = sct
@@ -79,7 +79,7 @@ class QLClient(ClientApi):
         self.token = requests.get(url=self.url + "open/auth/token",
                                   params={"client_id": self.cid, "client_secret": self.sct}).json()["data"]["token"]
         if not self.token:
-            raise KeyError
+            raise ValueError("无法获取token")
 
     def init_cron(self):
         time_now = int(round(time.time() * 1000))
