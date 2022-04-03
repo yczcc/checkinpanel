@@ -257,6 +257,8 @@ cp /ql/repo/yczcc_checkinpanel_master/notify.sample.toml /ql/config/notify.toml
 
 6. 2021 年 11 月 17 日起由 `JSON5` 配置转为更为友好的 `TOML` 配置。
 
+7. `txstock.js`和`txstockV2.js`感谢感谢原作者提供的[脚本](https://raw.githubusercontent.com/leafxcy/JavaScript/main/txstock.js)。
+
 ## 计划说明
 
 * [x] 𝑷𝒚𝒕𝒉𝒐𝒏 \| **api** \| LeetCode 每日一题 \| 每日一句 \| 天气预报 \| 每日新闻 \| 爱企查e卡监控 \| Hax 监控 \| RSS 订阅
@@ -291,6 +293,11 @@ cp /ql/repo/yczcc_checkinpanel_master/notify.sample.toml /ql/config/notify.toml
 | ❌    | AcFun \| 企鹅电竞 \| Epic \| 欢太商城 \| 芒果 TV                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 ## 致谢
+[@Oreomeow](https://github.com/Oreomeow/) --------------- checkinpanel
+
+[@leafxcy](https://github.com/leafxcy/) --------------- JavaScript/txstock
+
+@𝑶𝒕𝒉𝒆𝒓𝒔 -------------- 𝔰𝔠𝔯𝔦𝔭𝔱 𝔠𝔬𝔪𝔪𝔢𝔫𝔱𝔰
 
 [@𝐰𝐞𝐧𝐦𝐨𝐮𝐱](https://github.com/Wenmoux/) --------------- 𝗰𝗵𝗲𝗰𝗸𝗯𝗼𝘅
 
@@ -303,8 +310,6 @@ cp /ql/repo/yczcc_checkinpanel_master/notify.sample.toml /ql/config/notify.toml
 [@𝐡𝐰𝐤𝐱𝐤](https://github.com/hwkxk) ----------------------- 𝗛𝗲𝘆𝗧𝗮𝗽
 
 [@𝐥𝐮𝐦𝐢𝐧𝐨𝐥𝐞𝐨𝐧](https://github.com/luminoleon) ---- 𝗲𝗽𝗶𝗰𝗴𝗮𝗺𝗲𝘀-𝗰𝗹𝗮𝗶𝗺𝗲𝗿
-
-@𝑶𝒕𝒉𝒆𝒓𝒔 -------------- 𝔰𝔠𝔯𝔦𝔭𝔱 𝔠𝔬𝔪𝔪𝔢𝔫𝔱𝔰
 
 ## 历史 Star 数
 
