@@ -8,12 +8,12 @@ send_message() {
     if [ "${DD_BOT_TOKEN}" ]; then
         push=$(
             curl -k -s "https://oapi.dingtalk.com/robot/send?access_token=${DD_BOT_TOKEN}" \
-            -H 'Content-Type：application/json' \
+            -H 'Content-Type: application/json' \
             -d "{
-            \"msgtype\"：\"markdown\",
-            \"markdown\"：{
-                \"title\":\"${TITLE}\",
-                \"text\"：\"${log_text}\"
+            \"msgtype\": \"markdown\",
+            \"markdown\": {
+                \"title\": \"${TITLE}\",
+                \"text\": \"${log_text}\"
             }
         }"
         )
@@ -131,13 +131,13 @@ send_message() {
             result_wework_log_text="${TITLE}${log_text}"
             push=$(
                 curl -k -s "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${access_token}" \
-                -H 'Content-Type：application/json' \
+                -H 'Content-Type: application/json' \
                 -d "{
-                \"touser\"：\"@all\",
-                \"msgtype\"：\"text\",
-                \"agentid\"：\"${AGENTID}\",
-                \"text\"：{
-                    \"content\":\"${result_wework_log_text}\"
+                \"touser\": \"@all\",
+                \"msgtype\": \"text\",
+                \"agentid\": \"${AGENTID}\",
+                \"text\": {
+                    \"content\": \"${result_wework_log_text}\"
                 }
             }"
             )
