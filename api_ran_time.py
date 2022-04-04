@@ -100,11 +100,15 @@ class QLClient(ClientApi):
             total += 1
             if 'schedule' in c:
                 data = {
-                    "_id": c["_id"],
+                    "id": c["id"],
                     "name": c["name"],
                     "command": c["command"],
                     "schedule": self.random_time(c["schedule"], c["command"]),
                 }
+                if 'labels' in c and c["labels"]:
+                    data["labels"] = c["labels"]
+                else:
+                    data["labels"] = []
                 res = requests.put(url=self.url + "open/crons",
                                    data=data,
                                    headers={"Authorization": f"Bearer {self.token}"}).json()
