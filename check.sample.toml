@@ -384,3 +384,8 @@ url = "http://localhost:5700"
 delete = false
 repo = "xxx"
 exclude = "ql repo "
+
+# 苹果团【WEB】
+# appletuan.com，抓取登录成功只有请求的cookie中的_session_id，eg：Cookie: _session_id=kqCbZ1NDRW0NEcyxWJxxxxxx
+[[AppleTuan]]
+_session_id = "kqCbZ1NDRW0NEcyxWJxxxxxx"
