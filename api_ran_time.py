@@ -109,7 +109,8 @@ class QLClient(ClientApi):
                     data["labels"] = c["labels"]
                 else:
                     data["labels"] = []
-                res = requests.put(url=self.url + "open/crons",
+                time_now = int(round(time.time() * 1000))
+                res = requests.put(url=self.url + "open/crons" + "?t=" + str(time_now),
                                    data=data,
                                    headers={"Authorization": f"Bearer {self.token}"}).json()
                 if 'code' in res and 200 == res['code']:
