@@ -389,3 +389,8 @@ exclude = "ql repo "
 # appletuan.com，抓取登录成功只有请求的cookie中的_session_id，eg：Cookie: _session_id=kqCbZ1NDRW0NEcyxWJxxxxxx
 [[AppleTuan]]
 _session_id = "kqCbZ1NDRW0NEcyxWJxxxxxx"
+
+# GeekHub【WEB】
+# www.geekhub.com，抓取登录成功只有请求的cookie中的_session_id，eg：Cookie: _session_id=kqCbZ1NDRW0NEcyxWJxxxxxx
+[[GeekHub]]
+_session_id = "kqCbZ1NDRW0NEcyxWJxxxxxx"

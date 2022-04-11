@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 cron: 10 19 * * *
-new Env('苹果团');
+new Env('GeekHub');
 """
 
 import re
@@ -16,10 +16,10 @@ from utils import get_data
 urllib3.disable_warnings()
 
 
-class AppleTuan:
+class GeekHub:
     def __init__(self, check_items):
         self.check_items = check_items
-        self.url = "https://appletuan.com"
+        self.url = "https://www.geekhub.com"
 
     def sign(self, session):
         msg = ""
@@ -53,7 +53,7 @@ class AppleTuan:
             print(response)
             print(response.text)
             return "cookie 可能过期，获取签到url失败！"
-        checkin_url = "https://appletuan.com" + url
+        checkin_url = "https://www.geekhub.com" + url
         # print(checkin_url)
 
         # <meta name="csrf-param" content="authenticity_token" />
@@ -130,6 +130,8 @@ class AppleTuan:
 
 if __name__ == "__main__":
     data = get_data()
-    _check_items = data.get("AppleTuan", [])
-    res = AppleTuan(check_items=_check_items).main()
-    send("苹果团", res)
+    _check_items = data.get("GeekHub", [])
+    # _check_items = [{"_session_id": "o5FAOGbSfkY3vxxx"}]
+    res = GeekHub(check_items=_check_items).main()
+    # print(res)
+    send("GeekHub", res)
