@@ -105,7 +105,7 @@ class QLClient(ClientApi):
                     "command": c["command"],
                     "schedule": self.random_time(c["schedule"], c["command"]),
                 }
-                if 'labels' in c and c["labels"]:
+                if 'labels' in c and c["labels"] and len(c["labels"]) > 0 and len(c["labels"][0]) > 0:
                     data["labels"] = c["labels"]
                 else:
                     data["labels"] = []
@@ -114,6 +114,12 @@ class QLClient(ClientApi):
                                    headers={"Authorization": f"Bearer {self.token}"}).json()
                 if 'code' in res and 200 == res['code']:
                     success += 1
+                else:
+                    print(c)
+                    print(data)
+                    print(res)
+            else:
+                print(c)
         return [total, success]
 
 
