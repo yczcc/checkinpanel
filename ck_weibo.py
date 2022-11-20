@@ -4,15 +4,12 @@ cron: 48 7 * * *
 new Env('微博');
 """
 
-from urllib import parse
+from urllib.parse import parse_qsl, urlsplit
 
 import requests
-import urllib3
 
 from notify_mtr import send
 from utils import get_data
-
-urllib3.disable_warnings()
 
 
 class WeiBo:
@@ -23,18 +20,19 @@ class WeiBo:
     def sign(token):
         headers = {"User-Agent": "Weibo/52588 (iPhone; iOS 14.5; Scale/3.00)"}
         res = requests.get(
-            url=f"https://api.weibo.cn/2/checkin/add?c=iphone&{token}",
-            headers=headers,
+            url=f"https://api.weibo.cn/2/checkin/add?c=iphone&{token}", headers=headers
         ).json()
         if res.get("status") == 10000:
-            msg = f'连续签到: {res.get("data").get("continuous")}天\n本次收益: {res.get("data").get("desc")}'
-        elif res.get("errno") == 30000:
-            msg = "每日签到: 已签到"
-        elif res.get("status") == 90005:
-            msg = f'每日签到: {res.get("msg")}'
-        else:
-            msg = "每日签到: 签到失败"
-        return msg
+            return (
+                f'连续签到: {res.get("data").get("continuous")}天\n'
+                f'本次收益: {res.get("data").get("desc")}'
+            )
+
+        if res.get("errno") == 30000:
+            return "每日签到: 已签到"
+        if res.get("status") == 90005:
+            return f'每日签到: {res.get("msg")}'
+        return "每日签到: 签到失败"
 
     @staticmethod
     def card(token):
@@ -43,15 +41,14 @@ class WeiBo:
             url=f"https://api.weibo.cn/2/!/ug/king_act_home?c=iphone&{token}",
             headers=headers,
         ).json()
-        if res.get("status") == 10000:
-            nickname = res.get("data").get("user").get("nickname")
-            msg = (
-                f'用户昵称: {nickname}\n每日打卡: {res.get("data").get("signin").get("title").split("<")[0]}天\n'
-                f'积分总计: {res.get("data").get("user").get("energy")}'
-            )
-        else:
-            msg = "每日打卡: 活动过期或失效"
-        return msg
+        if res.get("status") != 10000:
+            return "每日打卡: 活动过期或失效"
+        nickname = res.get("data").get("user").get("nickname")
+        return (
+            f"用户昵称: {nickname}\n"
+            f'每日打卡: {res.get("data").get("signin").get("title").split("<")[0]}天\n'
+            f'积分总计: {res.get("data").get("user").get("energy")}'
+        )
 
     @staticmethod
     def pay(token):
@@ -60,9 +57,11 @@ class WeiBo:
             "Connection": "keep-alive",
             "Content-Type": "application/x-www-form-urlencoded",
             "Host": "pay.sc.weibo.com",
-            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Weibo (iPhone10,1__weibo__11.2.1__iphone__os14.5)",
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_5 like Mac OS X) "
+            "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 "
+            "Weibo (iPhone10,1__weibo__11.2.1__iphone__os14.5)",
         }
-        data = token + "&lang=zh_CN&wm=3333_2001"
+        data = f"{token}&lang=zh_CN&wm=3333_2001"
         response = requests.post(
             url="https://pay.sc.weibo.com/aj/mobile/home/welfare/signin/do",
             headers=headers,
@@ -91,7 +90,7 @@ class WeiBo:
         msg_all = ""
         for check_item in self.check_items:
             url = check_item.get("url")
-            query_dict = dict(parse.parse_qsl(parse.urlsplit(url).query))
+            query_dict = dict(parse_qsl(urlsplit(url).query))
             token = "&".join(
                 [
                     f"{key}={value}"
@@ -108,7 +107,7 @@ class WeiBo:
 
 
 if __name__ == "__main__":
-    data = get_data()
-    _check_items_list = data.get("WEIBO", [])
-    res = WeiBo(check_items=_check_items_list).main()
-    send("微博", res)
+    _data = get_data()
+    _check_items = _data.get("WEIBO", [])
+    result = WeiBo(check_items=_check_items).main()
+    send("微博", result)

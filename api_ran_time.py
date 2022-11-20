@@ -91,7 +91,7 @@ class QLClient(ClientApi):
                              and x.get("command", "").find(self.repo) != -1
                              and ((has_exclude and x.get("command", "").find(self.exclude) == -1) or (not has_exclude)),
                    requests.get(url=self.url + "open/crons?searchValue=" + self.repo + "&t=" + str(time_now),
-                                headers={"Authorization": f"Bearer {self.token}"}).json()["data"]))
+                                headers={"Authorization": f"Bearer {self.token}"}).json()["data"]["data"]))
 
     def shuffle_cron(self):
         total = 0

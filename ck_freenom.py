@@ -34,7 +34,7 @@ login_status_ptn = re.compile('<a href="logout.php">Logout</a>', re.I)
 
 
 class FreeNom:
-    def __init__(self, check_items: dict):
+    def __init__(self, check_items: list):
         self.check_items = check_items
         self._s = requests.Session()
         self._s.headers.update(
@@ -54,17 +54,15 @@ class FreeNom:
         return r.status_code == 200
 
     def main(self) -> str:
+        msg = ""
         msg_all = ""
-        i = 0
 
-        for check_item in self.check_items:
-            i += 1
+        for i, check_item in enumerate(self.check_items, start=1):
             username = check_item.get("username")
             password = check_item.get("password")
 
             # login
-            ok = self._login(usr=username, pwd=password)
-            if not ok:
+            if not self._login(usr=username, pwd=password):
                 msg_all += f"account{i} login failed\n\n"
                 continue
 
@@ -82,16 +80,15 @@ class FreeNom:
             if not match:
                 msg_all += f"account{i} get page token failed\n\n"
                 continue
-            token = match.group(1)
+            token = match[1]
 
             # domains
             domains = re.findall(domain_info_ptn, r.text)
 
             # renew domains
-            result = ""
+            res = ""
             for domain, days, renewal_id in domains:
-                days = int(days)
-                if days < 14:
+                if int(days) < 14:
                     self._s.headers.update(
                         {
                             "referer": f"https://my.freenom.com/domains.php?a=renewdomain&domain={renewal_id}",
@@ -107,19 +104,19 @@ class FreeNom:
                             "paymentmethod": "credit",
                         },
                     )
-                    result += (
+                    res += (
                         f"{domain} 续期成功\n"
                         if r.text.find("Order Confirmation") != -1
                         else f"{domain} 续期失败"
                     )
-                result += f"{domain} 还有 {days} 天续期\n"
-                msg = f"账号{i}\n" + result
+                res += f"{domain} 还有 {days} 天续期\n"
+                msg = f"账号{i}\n{res}"
             msg_all += msg + "\n"
         return msg_all
 
 
 if __name__ == "__main__":
-    data = get_data()
-    _check_items = data.get("FREENOM", [])
-    res = FreeNom(check_items=_check_items).main()
-    send("FreeNom", res)
+    _data = get_data()
+    _check_items = _data.get("FREENOM", [])
+    result = FreeNom(check_items=_check_items).main()
+    send("FreeNom", result)

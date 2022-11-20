@@ -36,7 +36,7 @@ v2021.09.30
 
 v2021.11.06
 - Receive renew PIN(6-digits) using mailparser parsed data download url
-  workflow: auto-forward your EUserv PIN email to your mailparser inbox 
+  workflow: auto-forward your EUserv PIN email to your mailparser inbox
   -> parsing PIN via mailparser -> get PIN from mailparser
 - Update kc2_security_password_get_token request
 
@@ -165,10 +165,7 @@ log_lang_options = {
 # Language Options: en/chs/cht, or leave it blank
 log_lang = "chs"
 
-ordinal = lambda n: "{}{}".format(
-    n,
-    "tsnrhtdd"[(n / 10 % 10 != 1) * (n % 10 < 4) * n % 10 :: 4],
-)
+ordinal = lambda n: f'{n}{"tsnrhtdd"[(n / 10 % 10 != 1) * (n % 10 < 4) * n % 10::4]}'
 
 
 def log(info: str):
@@ -177,7 +174,7 @@ def log(info: str):
 
 
 class EUserv:
-    def __init__(self, check_items):
+    def __init__(self, check_items: list):
         self.check_items = check_items
         self.BASE_URL = "https://support.euserv.com/index.iphp"
         self.UA = (
@@ -188,8 +185,9 @@ class EUserv:
         self.MAILPARSER_DOWNLOAD_BASE_URL = "https://files.mailparser.io/d/"
         self.WAITING_TIME_OF_PIN = 15
 
+    @staticmethod
     def captcha_solver(
-        self, captcha_image_url: str, session: requests.session, userid, apikey
+        captcha_image_url: str, session: requests.Session, userid: str, apikey: str
     ) -> dict:
         """
         TrueCaptcha API doc: https://apitruecaptcha.org/api
@@ -221,10 +219,10 @@ class EUserv:
             "data": str(encoded_string)[2:-1],
         }
         r = requests.post(url=url, json=data)
-        j = json.loads(r.text)
-        return j
+        return json.loads(r.text)
 
-    def handle_captcha_solved_result(self, solved: dict) -> str:
+    @staticmethod
+    def handle_captcha_solved_result(solved: dict) -> str:  # type: ignore
         """Since CAPTCHA sometimes appears as a very simple binary arithmetic expression.
         But since recognition sometimes doesn't show the result of the calculation directly,
         that's what this function is for.
@@ -234,65 +232,47 @@ class EUserv:
             if isinstance(solved_result, str):
                 if "RESULT  IS" in solved_result:
                     log(
-                        "[Captcha Solver] {}{}".format(
-                            log_lang_options.get(log_lang, lambda x: x)(
-                                "You are using the demo apikey"
-                            ),
-                            log_lang_options.get(log_lang, lambda x: x)("."),
-                        )
+                        f'[Captcha Solver] {log_lang_options.get(log_lang, lambda x: x)("You are using the demo apikey")}{log_lang_options.get(log_lang, lambda x: x)(".")} '
                     )
+
                     print(
-                        "{}{}".format(
-                            log_lang_options.get(log_lang, lambda x: x)(
-                                "There is no guarantee that demo apikey will work in the future"
-                            ),
-                            log_lang_options.get(log_lang, lambda x: x)("!"),
-                        )
+                        f'{log_lang_options.get(log_lang, lambda x: x)("There is no guarantee that demo apikey will work in the future")}{log_lang_options.get(log_lang, lambda x: x)("!")}'
                     )
+
                     # because using demo apikey
-                    text = re.findall(r"RESULT  IS . (.*) .", solved_result)[0]
+                    text = re.findall(r"RESULT {2}IS . (.*) .", solved_result)[0]
                 else:
                     # using your own apikey
                     log(
-                        "[Captcha Solver] {}{}".format(
-                            log_lang_options.get(log_lang, lambda x: x)(
-                                "You are using your own apikey"
-                            ),
-                            log_lang_options.get(log_lang, lambda x: x)("."),
-                        )
+                        f'[Captcha Solver] {log_lang_options.get(log_lang, lambda x: x)("You are using your own apikey")}{log_lang_options.get(log_lang, lambda x: x)(".")}'
                     )
+
                     text = solved_result
                 operators = ["X", "x", "+", "-"]
-                if any(x in text for x in operators):
-                    for operator in operators:
-                        operator_pos = text.find(operator)
-                        if operator == "x" or operator == "X":
-                            operator = "*"
-                        if operator_pos != -1:
-                            left_part = text[:operator_pos]
-                            right_part = text[operator_pos + 1 :]
-                            if left_part.isdigit() and right_part.isdigit():
-                                return eval(
-                                    "{left} {operator} {right}".format(
-                                        left=left_part,
-                                        operator=operator,
-                                        right=right_part,
-                                    )
-                                )
-                            else:
-                                # Because these symbols("X", "x", "+", "-") do not appear at the same time,
-                                # it just contains an arithmetic symbol.
-                                return text
-                else:
+                if all(x not in text for x in operators):
                     return text
+                for operator in operators:
+                    operator_pos = text.find(operator)
+                    if operator in ["x", "X"]:
+                        operator = "*"
+                    if operator_pos != -1:
+                        left_part = text[:operator_pos]
+                        right_part = text[operator_pos + 1 :]
+                        return (
+                            eval(
+                                "{left} {operator} {right}".format(
+                                    left=left_part, operator=operator, right=right_part
+                                )
+                            )
+                            if left_part.isdigit() and right_part.isdigit()
+                            else text
+                        )
+
             else:
                 print(
-                    "[Captcha Solver] {}{} {}".format(
-                        log_lang_options.get(log_lang, lambda x: x)("Returned JSON"),
-                        log_lang_options.get(log_lang, lambda x: x)(":"),
-                        solved,
-                    )
+                    f'[Captcha Solver] {log_lang_options.get(log_lang, lambda x: x)("Returned JSON")}{log_lang_options.get(log_lang, lambda x: x)(":")} {solved}'
                 )
+
                 log(
                     "[Captcha Solver] {}{}".format(
                         log_lang_options.get(log_lang, lambda x: x)(
@@ -304,12 +284,9 @@ class EUserv:
                 raise ValueError("[Captcha Solver] Service Exception!")
         else:
             print(
-                "[Captcha Solver] {}{} {}".format(
-                    log_lang_options.get(log_lang, lambda x: x)("Returned JSON"),
-                    log_lang_options.get(log_lang, lambda x: x)(":"),
-                    solved,
-                )
+                f'[Captcha Solver] {log_lang_options.get(log_lang, lambda x: x)("Returned JSON")}{log_lang_options.get(log_lang, lambda x: x)(":")} {solved}'
             )
+
             log(
                 "[Captcha Solver] {}{}".format(
                     log_lang_options.get(log_lang, lambda x: x)(
@@ -320,16 +297,13 @@ class EUserv:
             )
             raise KeyError("[Captcha Solver] Failed to find parsed results!")
 
-    def get_captcha_solver_usage(self, userid: str, apikey: str) -> dict:
+    @staticmethod
+    def get_captcha_solver_usage(userid: str, apikey: str) -> dict:
         url = "https://api.apitruecaptcha.org/one/getusage"
 
-        params = {
-            "username": userid,
-            "apikey": apikey,
-        }
+        params = {"username": userid, "apikey": apikey}
         r = requests.get(url=url, params=params)
-        j = json.loads(r.text)
-        return j
+        return json.loads(r.text)
 
     def get_pin_from_mailparser(self, url_id: str) -> str:
         """
@@ -348,19 +322,11 @@ class EUserv:
             # Mailparser parsed data download using Basic Authentication.
             # auth=("<your mailparser username>", "<your mailparser password>")
         )
-        pin = response.json()[0]["pin"]
-        return pin
+        return response.json()[0]["pin"]
 
-    def login(
-        self,
-        username: str,
-        password: str,
-        userid: str,
-        apikey: str,
-    ) -> tuple:
+    def login(self, username: str, password: str, userid: str, apikey: str) -> tuple:
         headers = {"user-agent": self.UA, "origin": "https://www.euserv.com"}
         url = self.BASE_URL
-        captcha_image_url = "https://support.euserv.com/securimage_show.php"
         session = requests.Session()
 
         sess = session.get(url, headers=headers)
@@ -381,96 +347,66 @@ class EUserv:
         f.raise_for_status()
 
         if (
-            f.text.find("Hello") == -1
-            and f.text.find("Confirm or change your customer data here") == -1
+            f.text.find("Hello") != -1
+            or f.text.find("Confirm or change your customer data here") != -1
         ):
+            return sess_id, session
+        if (
+            f.text.find(
+                "To finish the login process please solve the following captcha."
+            )
+            == -1
+        ):
+            return "-1", session
+        log(
+            f'[Captcha Solver] {log_lang_options.get(log_lang, lambda x: x)("Performing CAPTCHA recognition")}{log_lang_options.get(log_lang, lambda x: x)("...")}'
+        )
+
+        captcha_image_url = "https://support.euserv.com/securimage_show.php"
+        solved_result = self.captcha_solver(captcha_image_url, session, userid, apikey)
+        try:
+            captcha_code = self.handle_captcha_solved_result(solved_result)
+            log(
+                f'[Captcha Solver] {log_lang_options.get(log_lang, lambda x: x)("The recognized CAPTCHA is")}{log_lang_options.get(log_lang, lambda x: x)(":")} {captcha_code}'
+            )
+
+            if self.CHECK_CAPTCHA_SOLVER_USAGE:
+                usage = self.get_captcha_solver_usage(userid, apikey)
+                log(
+                    f'[Captcha Solver] {log_lang_options.get(log_lang, lambda x: x)("current date")} {usage[0]["date"]} {log_lang_options.get(log_lang, lambda x: x)("api usage count")}{log_lang_options.get(log_lang, lambda x: x)(":")} {usage[0]["count"]}'
+                )
+
+            f2 = session.post(
+                url,
+                headers=headers,
+                data={
+                    "subaction": "login",
+                    "sess_id": sess_id,
+                    "captcha_code": captcha_code,
+                },
+            )
             if (
-                f.text.find(
+                f2.text.find(
                     "To finish the login process please solve the following captcha."
                 )
                 == -1
             ):
-                return "-1", session
-            else:
                 log(
-                    "[Captcha Solver] {}{}".format(
-                        log_lang_options.get(log_lang, lambda x: x)(
-                            "Performing CAPTCHA recognition"
-                        ),
-                        log_lang_options.get(log_lang, lambda x: x)("..."),
-                    )
+                    f'[Captcha Solver] {log_lang_options.get(log_lang, lambda x: x)("CAPTCHA Verification passed")}'
                 )
-                solved_result = self.captcha_solver(
-                    captcha_image_url, session, userid, apikey
-                )
-                try:
-                    captcha_code = self.handle_captcha_solved_result(solved_result)
-                    log(
-                        "[Captcha Solver] {}{} {}".format(
-                            log_lang_options.get(log_lang, lambda x: x)(
-                                "The recognized CAPTCHA is"
-                            ),
-                            log_lang_options.get(log_lang, lambda x: x)(":"),
-                            captcha_code,
-                        )
-                    )
 
-                    if self.CHECK_CAPTCHA_SOLVER_USAGE:
-                        usage = self.get_captcha_solver_usage(userid, apikey)
-                        log(
-                            "[Captcha Solver] {} {} {}{} {}".format(
-                                log_lang_options.get(log_lang, lambda x: x)(
-                                    "current date"
-                                ),
-                                usage[0]["date"],
-                                log_lang_options.get(log_lang, lambda x: x)(
-                                    "api usage count"
-                                ),
-                                log_lang_options.get(log_lang, lambda x: x)(":"),
-                                usage[0]["count"],
-                            )
-                        )
+                return sess_id, session
+            log(
+                f'[Captcha Solver] {log_lang_options.get(log_lang, lambda x: x)("CAPTCHA Verification failed")}'
+            )
 
-                    f2 = session.post(
-                        url,
-                        headers=headers,
-                        data={
-                            "subaction": "login",
-                            "sess_id": sess_id,
-                            "captcha_code": captcha_code,
-                        },
-                    )
-                    if (
-                        f2.text.find(
-                            "To finish the login process please solve the following captcha."
-                        )
-                        == -1
-                    ):
-                        log(
-                            "[Captcha Solver] {}".format(
-                                log_lang_options.get(log_lang, lambda x: x)(
-                                    "CAPTCHA Verification passed"
-                                )
-                            )
-                        )
-                        return sess_id, session
-                    else:
-                        log(
-                            "[Captcha Solver] {}".format(
-                                log_lang_options.get(log_lang, lambda x: x)(
-                                    "CAPTCHA Verification failed"
-                                )
-                            )
-                        )
-                        return "-1", session
-                except (KeyError, ValueError):
-                    return "-1", session
-        else:
-            return sess_id, session
+            return "-1", session
+        except (KeyError, ValueError):
+            return "-1", session
 
-    def get_servers(self, sess_id: str, session: requests.session) -> dict:
+    def get_servers(self, sess_id: str, session: requests.Session) -> dict:
         d = {}
-        url = f"{self.BASE_URL}?sess_id=" + sess_id
+        url = f"{self.BASE_URL}?sess_id={sess_id}"
         headers = {"user-agent": self.UA, "origin": "https://www.euserv.com"}
         f = session.get(url=url, headers=headers)
         f.raise_for_status()
@@ -479,23 +415,22 @@ class EUserv:
             "#kc2_order_customer_orders_tab_content_1 .kc2_order_table.kc2_content_table tr"
         ):
             server_id = tr.select(".td-z1-sp1-kc")
-            if not len(server_id) == 1:
+            if len(server_id) != 1:
                 continue
             flag = (
-                True
-                if tr.select(".td-z1-sp2-kc .kc2_order_action_container")[0]
+                tr.select(".td-z1-sp2-kc .kc2_order_action_container")[0]
                 .get_text()
                 .find("Contract extension possible from")
                 == -1
-                else False
             )
+
             d[server_id[0].get_text()] = flag
         return d
 
     def renew(
         self,
         sess_id: str,
-        session: requests.session,
+        session: requests.Session,
         order_id: str,
         mailparser_dl_url_id: str,
     ) -> bool:
@@ -506,7 +441,7 @@ class EUserv:
             "origin": "https://support.euserv.com",
             "Referer": self.BASE_URL,
         }
-        data = {
+        data: dict = {
             "Submit": "Extend contract",
             "sess_id": sess_id,
             "ord_no": order_id,
@@ -541,11 +476,7 @@ class EUserv:
         time.sleep(self.WAITING_TIME_OF_PIN)
         pin = self.get_pin_from_mailparser(mailparser_dl_url_id)
         log(
-            "[MailParser] {}{} {}".format(
-                log_lang_options.get(log_lang, lambda x: x)("PIN"),
-                log_lang_options.get(log_lang, lambda x: x)(":"),
-                pin,
-            )
+            f'[MailParser] {log_lang_options.get(log_lang, lambda x: x)("PIN")}{log_lang_options.get(log_lang, lambda x: x)(":")} {pin}'
         )
 
         # using PIN instead of password to get token
@@ -559,7 +490,7 @@ class EUserv:
         }
         f = session.post(url, headers=headers, data=data)
         f.raise_for_status()
-        if not json.loads(f.text)["rs"] == "success":
+        if json.loads(f.text)["rs"] != "success":
             return False
         token = json.loads(f.text)["token"]["value"]
         data = {
@@ -572,39 +503,26 @@ class EUserv:
         time.sleep(5)
         return True
 
-    def check(self, sess_id: str, session: requests.session):
+    def check(self, sess_id: str, session: requests.Session):
         print(
-            "{}{}".format(
-                log_lang_options.get(log_lang, lambda x: x)("Checking"),
-                log_lang_options.get(log_lang, lambda x: x)("..."),
-            )
+            f'{log_lang_options.get(log_lang, lambda x: x)("Checking")}{log_lang_options.get(log_lang, lambda x: x)("...")}'
         )
+
         d = self.get_servers(sess_id, session)
         flag = True
         for key, val in d.items():
             if val:
                 flag = False
                 log(
-                    "[EUserv] {}{} {} {}{}".format(
-                        log_lang_options.get(log_lang, lambda x: x)("ServerID"),
-                        log_lang_options.get(log_lang, lambda x: x)(":"),
-                        key,
-                        log_lang_options.get(log_lang, lambda x: x)("Renew Failed"),
-                        log_lang_options.get(log_lang, lambda x: x)("!"),
-                    )
+                    f'[EUserv] {log_lang_options.get(log_lang, lambda x: x)("ServerID")}{log_lang_options.get(log_lang, lambda x: x)(":")} {key} {log_lang_options.get(log_lang, lambda x: x)("Renew Failed")}{log_lang_options.get(log_lang, lambda x: x)("!")}'
                 )
 
         if flag:
             log(
-                "[EUserv] {}{} {}{}".format(
-                    log_lang_options.get(log_lang, lambda x: x)("ALL Work Done"),
-                    log_lang_options.get(log_lang, lambda x: x)("!"),
-                    log_lang_options.get(log_lang, lambda x: x)("Enjoy"),
-                    log_lang_options.get(log_lang, lambda x: x)("~"),
-                )
+                f'[EUserv] {log_lang_options.get(log_lang, lambda x: x)("ALL Work Done")}{log_lang_options.get(log_lang, lambda x: x)("!")} {log_lang_options.get(log_lang, lambda x: x)("Enjoy")}{log_lang_options.get(log_lang, lambda x: x)("~")}'
             )
 
-    def main(self):
+    def main(self) -> str:
         i = 0
         for check_item in self.check_items:
             username = check_item.get("username")
@@ -698,7 +616,7 @@ class EUserv:
 
 
 if __name__ == "__main__":
-    data = get_data()
-    _check_items = data.get("EUSERV", [])
-    res = EUserv(check_items=_check_items).main()
-    send("EUserv", res)
+    _data = get_data()
+    _check_items = _data.get("EUSERV", [])
+    result = EUserv(check_items=_check_items).main()
+    send("EUserv", result)

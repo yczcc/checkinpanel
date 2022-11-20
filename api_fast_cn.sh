@@ -7,7 +7,7 @@ new Env('国内加速');
 COMMENT
 
 # alpine 换源
-sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
 
 # Python 换源
 mkdir -p /root/.config/pip
@@ -20,12 +20,6 @@ EOF
 npm config set registry https://registry.npmmirror.com/
 
 # CPAN 换源
-if ! (
-    perl -MCPAN -e 'CPAN::HandleConfig->load();' \
-        -e 'CPAN::HandleConfig->prettyprint("urllist")' |
-        grep -qF 'https://mirrors.tuna.tsinghua.edu.cn/CPAN/'
-); then
-    echo "Yes" | perl -MCPAN -e 'CPAN::HandleConfig->load();' \
-        -e 'CPAN::HandleConfig->edit("urllist", "unshift", "https://mirrors.tuna.tsinghua.edu.cn/CPAN/");' \
-        -e 'CPAN::HandleConfig->commit()'
-fi
+mkdir -p ~/.cpan/CPAN
+mv ~/.cpan/CPAN/MyConfig.pm ~/.cpan/CPAN/MyConfig.pm.back
+wget https://raw.githubusercontent.com/Oreomeow/checkinpanel/master/cpmConfig.pm -O ~/.cpan/CPAN/MyConfig.pm

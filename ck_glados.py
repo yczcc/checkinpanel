@@ -5,7 +5,6 @@ cron: 11 6 * * *
 new Env('GLaDOS');
 """
 
-import json
 import traceback
 from typing import Optional
 
@@ -16,13 +15,17 @@ from notify_mtr import send
 from utils import get_data
 
 
-class GLaDOS(object):
-    def __init__(self, check_items):
+class GLaDOS:
+    def __init__(self, check_items: list):
         self.check_items = check_items
         self.original_url = "https://glados.rocks"
-        self.UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36"
+        self.UA = (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/91.0.4472.114 Safari/537.36"
+        )
 
-    def api_traffic(self, cookies):
+    def api_traffic(self, cookies: str):
         traffic_url = f"{self.original_url}/api/user/traffic"
         referer_url = f"{self.original_url}/console"
 
@@ -38,7 +41,7 @@ class GLaDOS(object):
         ) as r:
             return r.json()
 
-    def api_check_in(self, cookies) -> dict:
+    def api_check_in(self, cookies: str) -> dict:
         check_in_url = f"{self.original_url}/api/user/checkin"
         referer_url = f"{self.original_url}/console/checkin"
 
@@ -53,11 +56,11 @@ class GLaDOS(object):
                 "user-agent": self.UA,
                 "content-type": "application/json;charset=UTF-8",
             },
-            data=json.dumps(payload),
+            json=payload,
         ) as r:
             return r.json()
 
-    def api_status(self, cookies) -> dict:
+    def api_status(self, cookies: str) -> dict:
         status_url = f"{self.original_url}/api/user/status"
         referer_url = f"{self.original_url}/console/checkin"
 
@@ -72,58 +75,50 @@ class GLaDOS(object):
         ) as r:
             return r.json()
 
-    def get_budget(self, vip_level: Optional[int]) -> dict:
+    @staticmethod
+    def get_budget(vip_level: Optional[int]) -> dict:
         budget_info = utils_tmp.budget_list
         user_budgets = [
             i
             for i in budget_info
-            if (vip_level is not None and "vip" in i and i["vip"] == vip_level)
+            if (vip_level is not None and i.get("vip") == vip_level)
             or (vip_level is None and "vip" not in i)
         ]
-        if len(user_budgets) > 0:
+        if user_budgets:
             return user_budgets[0]
-        else:
-            raise OSError(f"Budget info not found for this user! VIP: {vip_level}")
+        raise OSError(f"Budget info not found for this user! VIP: {vip_level}")
 
     def main(self):
         msg_all = ""
         for check_item in self.check_items:
             cookie = check_item.get("cookie")
             try:
-                check_in_response = self.api_check_in(cookie)
-                check_in_msg = check_in_response["message"]
+                check_in_res = self.api_check_in(cookie)
+                check_in_msg = check_in_res["message"]
                 if check_in_msg == "\u6ca1\u6709\u6743\u9650":
                     msg = (
                         "--------------------\n"
                         "Msg: Your cookies are expired!\n"
                         "--------------------"
                     )
-                status_response = self.api_status(cookie)
-                # print(status_response)
-                left_days = int(str(status_response["data"]["leftDays"]).split(".")[0])
-                vip_level = status_response["data"]["vip"]
-                traffic_response = self.api_traffic(cookie)
-                used_gb = traffic_response["data"]["today"] / 1024 / 1024 / 1024
+                    msg_all += msg
+                    continue
+                status_res = self.api_status(cookie)
+                # print(status_res)
+                left_days = int(str(status_res["data"]["leftDays"]).split(".")[0])
+                vip_level = status_res["data"]["vip"]
+                traffic_res = self.api_traffic(cookie)
+                used_gb = traffic_res["data"]["today"] / 1024 / 1024 / 1024
                 user_budget = self.get_budget(vip_level)
                 total_gb = user_budget["budget"]
                 plan = user_budget["level"]
                 msg = (
                     "--------------------\n"
-                    + "Msg: "
-                    + check_in_msg
-                    + "\n"
-                    + "Plan: "
-                    + plan
-                    + " Plan\n"
-                    + "Left days: "
-                    + str(left_days)
-                    + "\n"
-                    + "Usage: "
-                    + "%.3f" % used_gb
-                    + "GB\n"
-                    + "Total: "
-                    + str(total_gb)
-                    + "GB\n"
+                    f"Msg: {check_in_msg}\n"
+                    f"Plan: {plan} Plan\n"
+                    f"Left days: {left_days}\n"
+                    f"Usage: {used_gb:.3f} GB\n"
+                    f"Total: {total_gb} GB\n"
                     "--------------------"
                 )
             except Exception:
@@ -131,8 +126,7 @@ class GLaDOS(object):
                     "--------------------\n"
                     "Msg: Check in error!\n"
                     "Error:\n"
-                    f"{traceback.format_exc()}"
-                    "\n"
+                    f"{traceback.format_exc()}\n"
                     "--------------------"
                 )
             msg_all += msg + "\n\n"
@@ -140,7 +134,7 @@ class GLaDOS(object):
 
 
 if __name__ == "__main__":
-    data = get_data()
-    _check_items = data.get("GLADOS", [])
-    res = GLaDOS(check_items=_check_items).main()
-    send("GLaDOS", res)
+    _data = get_data()
+    _check_items = _data.get("GLADOS", [])
+    result = GLaDOS(check_items=_check_items).main()
+    send("GLaDOS", result)
