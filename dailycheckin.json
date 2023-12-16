@@ -705,6 +705,16 @@
             "running": true
         },
         {
+            "name": "爱奇艺(新)",
+            "type": "cron",
+            "time": "55 12 * * *",
+            "job": {
+                "type": "runjs",
+                "target": "checkin.js -env PYNAME=ck_iqiyi_new.py"
+            },
+            "running": true
+        },
+        {
             "name": "联想乐云",
             "type": "cron",
             "time": "10 6 * * *",

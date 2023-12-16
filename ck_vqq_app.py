@@ -136,7 +136,7 @@ class VQQ:
         elif 0 == res_checkInIsDone[0]:
             # 签到
             res_checkIn = self.tx_videoApp_checkIn(cookie)
-            if res_checkIn[0] != True:
+            if not res_checkIn[0]:
                 return log + res_checkIn[1]
             log += res_checkIn[1]
         else:
@@ -144,13 +144,13 @@ class VQQ:
 
         # 用户信息查询
         res_userInfo = self.tx_videoApp_userInfo(cookie)
-        if res_userInfo[0] != True:
+        if not res_userInfo[0]:
             return log + res_userInfo[1]
         log += res_userInfo[1]
 
         # 积分查询
         res_jifen = self.tx_videoApp_jifen(cookie)
-        if res_jifen[0] != True:
+        if not res_jifen[0]:
             return log + res_jifen[1]
         log += res_jifen[1]
 
