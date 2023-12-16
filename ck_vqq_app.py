@@ -128,7 +128,7 @@ class VQQ:
 
         time_now = time.localtime(int(time.time()))
         now = time.strftime("%Y-%m-%d %H:%M:%S", time_now)
-        log = "腾讯视频会员签到执行任务\n" + now
+        log = "VIP会员签到任务\n" + now
 
         res_checkInIsDone = self.tx_videoApp_checkInIsDone(cookie)
         if -1 == res_checkInIsDone[0]:
@@ -244,7 +244,8 @@ class VQQ:
                 ip = str(check_item.get("ip"))
             else:
                 ip = "111.30.240.161"
-            self.tx_videoApp(vdevice_qimei36, vqq_appid, vqq_openid, vqq_access_token, vqq_vuserid, main_login, ip)
+            sign_msg = self.tx_videoApp(vdevice_qimei36, vqq_appid, vqq_openid, vqq_access_token, vqq_vuserid, main_login, ip)
+            msg_all += sign_msg + "\n\n"
         return msg_all
 
 if __name__ == "__main__":
