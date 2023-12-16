@@ -1,5 +1,14 @@
 # Changelog
 
+## 20231216-1-001(2023-12-16)
+
+* : add tx video app checkin
+
+腾讯视频APP签到配置说明：
+1. 打开抓包软件，再打开腾讯视频APP。
+2. 打开手机腾讯视频APP VIP任务签到。
+3. 签到成功后，抓包软件中找https://vip.video.qq.com/rpc/trpc.new_task_system.task_system.TaskSystem/CheckIn?rpc_data=%7B%7D 的请求包，cookie只要这几个vdevice_qimei36、vqq_appid、vqq_openid、vqq_access_token、vqq_vuserid、main_login。这些都是固定的，如果报错出现图形验证就去腾讯视频手动签一次到就行了。
+
 ## 20221120-4-010(2022-11-20)
 
 * :merge from 20221108-4-010
