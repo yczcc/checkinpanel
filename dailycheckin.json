@@ -745,6 +745,16 @@
             "running": true
         },
         {
+            "name": "腾讯视频APP",
+            "type": "cron",
+            "time": "55 10 * * *",
+            "job": {
+                "type": "runjs",
+                "target": "checkin.js -env PYNAME=ck_vqq_app.py"
+            },
+            "running": true
+        },
+        {
             "name": "联通沃邮箱",
             "type": "cron",
             "time": "56 13 * * *",
