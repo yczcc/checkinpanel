@@ -9,7 +9,7 @@
 # export iqiyi_dfp = ''
 """
 
-from time import sleep, time
+import time
 from random import randint, choice
 from json import dumps
 from hashlib import md5 as md5Encode
@@ -17,6 +17,9 @@ from string import digits, ascii_lowercase, ascii_uppercase
 from sys import exit, stdout
 from os import system
 from re import findall
+
+from notify_mtr import send
+from utils import get_data
 
 try:
     from requests import Session, get, post
@@ -47,7 +50,7 @@ class Iqiyi:
         else:
             iqiyi_dfp = "a1a7d52af83b304b908ebf41bd819df745221e9419b36b112537fd117235d7df95"
         if 'sleep_await' in check_items:
-            sleep_await = check_items.get("sleep_await")
+            sleep_await = int(check_items.get("sleep_await"))
         else:
             sleep_await = 1
         if 'get_iqiyi_dfp' in check_items:
@@ -97,8 +100,8 @@ class Iqiyi:
 
     def timestamp(self, short=False):
         if (short):
-            return int(time())
-        return int(time() * 1000)
+            return int(time.time())
+        return int(time.time() * 1000)
 
     def md5(self, str):
         m = md5Encode(str.encode(encoding='utf-8'))
@@ -151,7 +154,7 @@ class Iqiyi:
             self.dfp = data["result"]["dfp"]
             return [True, self.dfp]
         except:
-            log = "请求api失败 最大可能是cookie失效了 也可能是网络问题"
+            log = "请求get_dfp api失败 最大可能是cookie失效了 也可能是网络问题"
             self.print_now(log)
         return [False, log]
 
@@ -177,10 +180,10 @@ class Iqiyi:
                 self.uid = data['data']['userinfo']['pru']
                 success = True
             else:
-                log = "请求api失败 最大可能是cookie失效了 也可能是网络问题"
+                log = "请求getUid api失败 最大可能是cookie失效了 也可能是网络问题"
                 self.print_now(log)
         except:
-            log = "请求api失败 最大可能是cookie失效了 也可能是网络问题"
+            log = "请求getUid api失败 最大可能是cookie失效了 也可能是网络问题"
             self.print_now(log)
         return [success, log]
 
@@ -190,9 +193,9 @@ class Iqiyi:
         try:
             data = self.req(url)
             watch_time = data['data']['viewtime']['time']
-            return [True, watch_time]
+            return [True, str(watch_time)]
         except:
-            log = "请求api失败 最大可能是cookie失效了 也可能是网络问题"
+            log = "请求getWatchTime api失败 最大可能是cookie失效了 也可能是网络问题"
             self.print_now(log)
         return [False, log]
 
@@ -251,7 +254,7 @@ class Iqiyi:
             url = f'https://tc.vip.iqiyi.com/taskCenter/task/joinTask?P00001={self.ck}&taskCode={taskCode}&platform=b6c13e26323c537d&lang=zh_CN&app_lm=cn'
             if self.req(url)['code'] == 'A00000':
                 log += f'领取{taskCodeList[taskCode]}任务成功'
-                sleep(10)
+                time.sleep(10)
             else:
                 log += f'领取{taskCodeList[taskCode]}任务失败' + '\n'
                 continue
@@ -259,7 +262,7 @@ class Iqiyi:
             url = f'https://tc.vip.iqiyi.com/taskCenter/task/notify?taskCode={taskCode}&P00001={self.ck}&platform=97ae2982356f69d8&lang=cn&bizSource=component_browse_timing_tasks&_={self.timestamp()}'
             if self.req(url)['code'] == 'A00000':
                 log += f',完成{taskCodeList[taskCode]}任务成功'
-                sleep(2)
+                time.sleep(2)
             else:
                 log += f',完成{taskCodeList[taskCode]}任务失败' + '\n'
                 continue
@@ -273,7 +276,7 @@ class Iqiyi:
             except:
                 self.print_now(f"领取{taskCodeList[taskCode]}任务奖励可能出错了 也可能没出错 只是你今天跑了第二次")
                 log += f",任务奖励可能出错了 也可能没出错 只是你今天跑了第二次" + '\n'
-            sleep(5)
+            time.sleep(5)
         return log
 
     def lottery_draw(self, lottery=True):
@@ -318,20 +321,25 @@ class Iqiyi:
 
     def start(self):
         self.print_now("正在执行刷观影时长脚本 为减少风控 本过程运行时间较长 大概半个小时")
-        totalTime = self.getWatchTime()
+        resWatchTime = self.getWatchTime()
+        if not resWatchTime[0]:
+            return resWatchTime
+        totalTime = int(resWatchTime[1])
         if totalTime >= 7200:
-            self.print_now(f"你的账号今日观影时长大于2小时 不执行刷观影时长")
-            return
+            log = f"你的账号今日观影时长大于2小时 不执行刷观影时长"
+            self.print_now(log)
+            return [False, log]
         for i in range(150):
             Time = randint(60, 120)
             url = self.getUrl(Time, self.dfp)
             self.req(url, 'other')
             totalTime += Time
-            sleep(randint(20, 40))
+            time.sleep(randint(20, 40))
             if i % 20 == 3:
-                self.print_now(f"现在已经刷到了{totalTime}秒, 数据同步有延迟, 仅供参考")
+                self.print_now(f"观影时长现在已经刷到了{totalTime}秒, 数据同步有延迟, 仅供参考")
             if totalTime >= 7600:
                 break
+        return [True, f"观影时长现在已经刷到了{totalTime}秒, 数据同步有延迟, 仅供参考"]
 
     def main(self):
         time_now = time.localtime(int(time.time()))
@@ -354,7 +362,11 @@ class Iqiyi:
             return log + resSignUrl[1]
 
         # 刷观影时长
-        self.start()
+        resStart = self.start()
+        if not resStart[0]:
+            log += resStart[1] + '\n'
+        else:
+            log += resStart[1] + '\n'
 
         # 抽奖
         for i in range(10):
@@ -362,7 +374,7 @@ class Iqiyi:
             if int(resLottery[0]) == 0:
                 break
             log += resLottery[1] + '\n'
-            sleep(3)
+            time.sleep(3)
 
         # 签到
         resCheckIn = self.checkIn()
@@ -376,7 +388,7 @@ class Iqiyi:
 
         self.print_now(f"任务已经执行完成, 因爱奇艺观影时间同步较慢,这里等待3分钟再查询今日成长值信息,若不需要等待直接查询,请设置环境变量名 sleep_await = 0 默认为等待")
         if int(self.sleep_await) == 1:
-            sleep(180)
+            time.sleep(180)
 
         # 获取用户信息
         log += self.get_userinfo()

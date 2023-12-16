@@ -6,7 +6,7 @@
 
 爱奇艺签到配置说明：
 1. iqy_ck: 爱奇艺cookie 可整段 也可只保留P00001=xxx; (必须)
-2. iqiyi_dfp: 爱奇艺cookie中__dfp字段@符号前面的部分
+2. iqiyi_dfp: 爱奇艺cookie中__dfp字段@符号前面的部分(选填, 如果cookie(即iqy_ck)中有__dfp字段，则会先从cookie中自动解析__dfp字段，如果单独设置了iqiyi_dfp，则优先使用iqiyi_dfp)
 3. get_iqiyi_dfp: 是否请求我的api来获取参数 再去请求爱奇艺的api来获取dfp dfp类似于设备号 cookie字段内有 (选填, 不等待0或者等待1, 默认为0)
 4. sleep_await: 因观影时长同步有延迟 故建议完成任务后等待几分钟再查询 (选填, 不等待0或者等待1, 默认为1)
 
