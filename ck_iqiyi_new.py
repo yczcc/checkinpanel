@@ -1,12 +1,8 @@
 #!/usr/bin/python3
 # -- coding: utf-8 --
-# cron "30 7,10 * * *" script-path=xxx.py,tag=匹配cron用
-# new Env('爱奇艺签到加刷时长')
-
 """
-#变量 爱奇艺 iqy_ck  iqiyi_dfp 放在青龙config.sh里面或者在青龙变量分别设置这2个参数 此脚本不要瞎改
-# export iqy_ck = ''
-# export iqiyi_dfp = ''
+cron "30 7,10 * * *" script-path=xxx.py,tag=匹配cron用
+new Env('爱奇艺签到加刷时长');
 """
 
 import time
@@ -71,6 +67,7 @@ class Iqiyi:
         self.msg = ""
         self.user_info = ""
         self.sleep_await = sleep_await
+        self.qyid = self.md5(self.uuid(16))
 
     """工具"""
 
@@ -154,25 +151,25 @@ class Iqiyi:
             self.dfp = data["result"]["dfp"]
             return [True, self.dfp]
         except:
-            log = "请求get_dfp api失败 最大可能是cookie失效了 也可能是网络问题"
-            self.print_now(log)
-        return [False, log]
+            msg = " * 请求get_dfp api失败 最大可能是cookie失效了 也可能是网络问题"
+            self.print_now(msg)
+        return [False, msg]
 
     def get_userinfo(self):
         url = f"https://tc.vip.iqiyi.com/growthAgency/v2/growth-aggregation?messageId={self.qyid}&platform=97ae2982356f69d8&P00001={self.ck}&responseNodes=duration%2Cgrowth%2Cupgrade%2CviewTime%2CgrowthAnnualCard&_={self.timestamp()}"
         data = self.req(url)
         msg = data['data']['growth']
         try:
-            self.user_info = f"查询成功: 到期时间{msg['deadline']}\t当前等级为{msg['level']}\n\t今日获得成长值{msg['todayGrowthValue']}\t总成长值{msg['growthvalue']}\t距离下一等级还差{msg['distance']}成长值"
+            self.user_info = f"用户信息查询成功: \n\t到期时间{msg['deadline']}\n\t当前等级为{msg['level']}\n\t今日获得成长值{msg['todayGrowthValue']}\n\t总成长值{msg['growthvalue']}\n\t距离下一等级还差{msg['distance']}成长值"
             self.print_now(self.user_info)
         except:
-            self.user_info = f"查询失败,未获取到用户信息"
-        return self.user_info + '\n'
+            self.user_info = f"用户信息查询失败,未获取到用户信息"
+        return ' * ' + self.user_info
 
     """获取用户id"""
     def getUid(self):
         success = False
-        log = ''
+        msg = ' * '
         url = f'https://passport.iqiyi.com/apis/user/info.action?authcookie={self.ck}&fields=userinfo%2Cqiyi_vip&timeout=15000'
         try:
             data = self.req(url)
@@ -180,12 +177,12 @@ class Iqiyi:
                 self.uid = data['data']['userinfo']['pru']
                 success = True
             else:
-                log = "请求getUid api失败 最大可能是cookie失效了 也可能是网络问题"
-                self.print_now(log)
+                msg += "请求getUid api失败 最大可能是cookie失效了 也可能是网络问题"
+                self.print_now(msg)
         except:
-            log = "请求getUid api失败 最大可能是cookie失效了 也可能是网络问题"
-            self.print_now(log)
-        return [success, log]
+            msg += "请求getUid api失败 最大可能是cookie失效了 也可能是网络问题"
+            self.print_now(msg)
+        return [success, msg]
 
     # 获取观影时长
     def getWatchTime(self):
@@ -199,49 +196,113 @@ class Iqiyi:
             self.print_now(log)
         return [False, log]
 
-    # 获取签名URL
-    def getSignUrl(self):
-        self.qyid = self.md5(self.uuid(16))
+    def checkInStatus(self):
+        msg = ''
         time_stamp = self.timestamp()
         if self.uid == "":
-            log = "获取用户id失败 可能为cookie设置错误或者网络异常,请重试或者检查cookie"
-            self.print_now(log)
-            return [False, log]
-        data = f'agentType=1|agentversion=1|appKey=basic_pcw|authCookie={self.ck}|qyid={self.qyid}|task_code=natural_month_sign|timestamp={time_stamp}|typeCode=point|userId={self.uid}|UKobMjDMsDoScuWOfp6F'
-        url = f'https://community.iqiyi.com/openApi/task/execute?agentType=1&agentversion=1&appKey=basic_pcw&authCookie={self.ck}&qyid={self.qyid}&sign={self.md5(data)}&task_code=natural_month_sign&timestamp={time_stamp}&typeCode=point&userId={self.uid}'
-        return [True, url]
-
-    def getUrl(self, time, dfp):
-        return f'https://msg.qy.net/b?u=f600a23f03c26507f5482e6828cfc6c5&pu={self.uid}&p1=1_10_101&v=5.2.66&ce={self.uuid(32)}&de=1616773143.1639632721.1639653680.29&c1=2&ve={self.uuid(32)}&ht=0&pt={randint(1000000000, 9999999999) / 1000000}&isdm=0&duby=0&ra=5&clt=&ps2=DIRECT&ps3=&ps4=&br=mozilla%2F5.0%20(windows%20nt%2010.0%3B%20win64%3B%20x64)%20applewebkit%2F537.36%20(khtml%2C%20like%20gecko)%20chrome%2F96.0.4664.110%20safari%2F537.36&mod=cn_s&purl=https%3A%2F%2Fwww.iqiyi.com%2Fv_1eldg8u3r08.html%3Fvfrm%3Dpcw_home%26vfrmblk%3D712211_cainizaizhui%26vfrmrst%3D712211_cainizaizhui_image1%26r_area%3Drec_you_like%26r_source%3D62%2540128%26bkt%3DMBA_PW_T3_53%26e%3Db3ec4e6c74812510c7719f7ecc8fbb0f%26stype%3D2&tmplt=2&ptid=01010031010000000000&os=window&nu=0&vfm=&coop=&ispre=0&videotp=0&drm=&plyrv=&rfr=https%3A%2F%2Fwww.iqiyi.com%2F&fatherid={randint(1000000000000000, 9999999999999999)}&stauto=1&algot=abr_v12-rl&vvfrom=&vfrmtp=1&pagev=playpage_adv_xb&engt=2&ldt=1&krv=1.1.85&wtmk=0&duration={randint(1000000, 9999999)}&bkt=&e=&stype=&r_area=&r_source=&s4={randint(100000, 999999)}_dianshiju_tbrb_image2&abtest=1707_B%2C1550_B&s3={randint(100000, 999999)}_dianshiju_tbrb&vbr={randint(100000, 999999)}&mft=0&ra1=2&wint=3&s2=pcw_home&bw=10&ntwk=18&dl={randint(10, 999)}.27999999999997&rn=0.{randint(1000000000000000, 9999999999999999)}&dfp={dfp}&stime={self.timestamp()}&r={randint(1000000000000000, 9999999999999999)}&hu=1&t=2&tm={time}&_={self.timestamp()}'
-
-    # 签到
-    def checkIn(self):
-        url = self.getSignUrl()
+            msg += "获取签到状态失败 可能为cookie设置错误或者网络异常,请重试或者检查cookie"
+            self.print_now(msg)
+            return [-1, msg]
+        task_code = 'natural_month_sign_status'
+        data = f'agentType=1|agentversion=1.0|appKey=basic_pcw|authCookie={self.ck}|qyid={self.qyid}|task_code={task_code}|timestamp={time_stamp}|typeCode=point|userId={self.uid}|UKobMjDMsDoScuWOfp6F'
+        url = f'https://community.iqiyi.com/openApi/task/execute?agentType=1&agentversion=1.0&appKey=basic_pcw&authCookie={self.ck}&qyid={self.qyid}&task_code={task_code}&timestamp={time_stamp}&typeCode=point&userId={self.uid}&sign={self.md5(data)}'
         body = {
-            "natural_month_sign": {
-                "taskCode": "iQIYI_mofhr",
+            task_code: {
                 "agentType": 1,
                 "agentversion": 1,
                 "authCookie": self.ck,
                 "qyid": self.qyid,
-                "verticalCode": "iQIYI"
+                "verticalCode": "iQIYI",
+                "taskCode": "iQIYI_mofhr"
             }
         }
         try:
-            data = self.req(url, "post", body)
-            if data.get('code') == 'A00000':
-                self.print_now(f"签到执行成功, {data['data']['msg']}")
-                return [True, "签到执行成功"]
-            else:
-                log = "签到失败，原因可能是签到接口又又又又改了"
-                self.print_now(log)
+            res = self.req(url, "post", body)
+            if res.get('code') == 'A00000':
+                res_data = res.get('data')
+                if res_data.get('code') == 'A000' or res_data.get('success'):
+                    self.print_now(f"签到成功, {res_data['msg']}")
+                    msg += "获取签到状态成功"
+                    if res_data['data'].get('todaySign') == True:
+                        msg += ',今日已签到'
+                        msg += ',已累计签到' + str(res_data['data'].get('cumulateSignDays')) + '天'
+                        return [1, msg]
+                    msg += ',已累计签到' + str(res_data['data'].get('cumulateSignDays')) + '天'
+                    return [0, msg]
+            msg += "获取签到状态失败，原因可能是签到接口又又又又改了"
+            self.print_now(msg)
         except:
-            log = "签到失败，原因可能是签到接口又又又又改了"
-            self.print_now(log)
-        return [False, log]
+            msg += "获取签到状态失败，原因可能是签到接口又又又又改了"
+            self.print_now(msg)
+        return [-2, msg]
+
+    # def checkInProcess(self):
+    #     time_stamp = self.timestamp()
+    #     if self.uid == "":
+    #         log = " * 获取用户id失败 可能为cookie设置错误或者网络异常,请重试或者检查cookie"
+    #         self.print_now(log)
+    #         return [False, log]
+    #     data = f'agentType=1|agentversion=1.0|appKey=basic_pcw|authCookie={self.ck}|qyid={self.qyid}|task_code=natural_month_sign|timestamp={time_stamp}|typeCode=point|userId={self.uid}|UKobMjDMsDoScuWOfp6F'
+    #     url = f'https://community.iqiyi.com/openApi/task/execute?agentType=1&agentversion=1.0&appKey=basic_pcw&authCookie={self.ck}&qyid={self.qyid}&task_code=natural_month_sign_process&timestamp={time_stamp}&typeCode=point&userId={self.uid}&sign={self.md5(data)}'
+    #     return [True, url]
+
+    def checkInSign(self):
+        msg = ''
+        time_stamp = self.timestamp()
+        if self.uid == "":
+            msg = " * 获取用户id失败 可能为cookie设置错误或者网络异常,请重试或者检查cookie"
+            self.print_now(msg)
+            return [False, msg]
+        task_code = 'natural_month_sign'
+        data = f'agentType=1|agentversion=1.0|appKey=basic_pcw|authCookie={self.ck}|qyid={self.qyid}|task_code={task_code}|timestamp={time_stamp}|typeCode=point|userId={self.uid}|UKobMjDMsDoScuWOfp6F'
+        url = f'https://community.iqiyi.com/openApi/task/execute?agentType=1&agentversion=1.0&appKey=basic_pcw&authCookie={self.ck}&qyid={self.qyid}&task_code={task_code}&timestamp={time_stamp}&typeCode=point&userId={self.uid}&sign={self.md5(data)}'
+        body = {
+            task_code: {
+                "agentType": 1,
+                "agentversion": 1,
+                "authCookie": self.ck,
+                "qyid": self.qyid,
+                "verticalCode": "iQIYI",
+                "taskCode": "iQIYI_mofhr",
+            }
+        }
+        try:
+            res = self.req(url, "post", body)
+            if res.get('code') == 'A00000':
+                res_data = res.get('data')
+                if res_data.get('code') == 'A000' or res_data.get('success'):
+                    self.print_now(f"签到成功, {res_data['msg']}")
+                    msg += "签到执行成功"
+                    for reward in res_data['data'].get('rewards'):
+                        if reward.get('rewardType') == 1:
+                            msg += ",获取" + str(reward.get('rewardCount')) + '点成长值'
+                            break
+                    return [True, msg]
+            msg += "签到失败，原因可能是签到接口又又又又改了"
+            self.print_now(msg)
+        except:
+            msg += "签到失败，原因可能是签到接口又又又又改了"
+            self.print_now(msg)
+        return [False, msg]
+
+    # 签到
+    def checkIn(self):
+        msg = ' * '
+        # 获取签到状态
+        resCheckInStatus = self.checkInStatus()
+        msg += resCheckInStatus[1]
+        if resCheckInStatus[0] < 0:
+            return [False, msg]
+        elif 1 == resCheckInStatus[0]:
+            return [True, msg]
+
+        # 执行签到
+        resCheckInSign = self.checkInSign()
+        msg += '\n' + resCheckInSign[1]
+        return [resCheckInSign[0], msg]
 
     def dailyTask(self):
-        log = ''
+        msg = ''
         taskCodeList = {
             'b6e688905d4e7184': "浏览生活福利",
             'a7f02e895ccbf416': "看看热b榜",
@@ -250,36 +311,37 @@ class Iqiyi:
             "GetReward": "逛领福利频道"
         }
         for taskCode in taskCodeList:
-            # 领任务
-            url = f'https://tc.vip.iqiyi.com/taskCenter/task/joinTask?P00001={self.ck}&taskCode={taskCode}&platform=b6c13e26323c537d&lang=zh_CN&app_lm=cn'
-            if self.req(url)['code'] == 'A00000':
-                log += f'领取{taskCodeList[taskCode]}任务成功'
-                time.sleep(10)
-            else:
-                log += f'领取{taskCodeList[taskCode]}任务失败' + '\n'
-                continue
-            # 完成任务
-            url = f'https://tc.vip.iqiyi.com/taskCenter/task/notify?taskCode={taskCode}&P00001={self.ck}&platform=97ae2982356f69d8&lang=cn&bizSource=component_browse_timing_tasks&_={self.timestamp()}'
-            if self.req(url)['code'] == 'A00000':
-                log += f',完成{taskCodeList[taskCode]}任务成功'
-                time.sleep(2)
-            else:
-                log += f',完成{taskCodeList[taskCode]}任务失败' + '\n'
-                continue
-            # 领取奖励
-            # url = f'https://tc.vip.iqiyi.com/taskCenter/task/getTaskRewards?P00001={self.ck}&taskCode={taskcode}&dfp={self.dfp}&platform=b6c13e26323c537d&lang=zh_CN&app_lm=cn&deviceID={self.md5(self.uuid(8))}&token=&multiReward=1&fv=bed99b2cf5722bfe'
-            url = f"https://tc.vip.iqiyi.com/taskCenter/task/getTaskRewards?P00001={self.ck}&taskCode={taskCode}&lang=zh_CN&platform=b2f2d9af351b8603"
+            msg += f' * 日常任务-{taskCodeList[taskCode]}'
             try:
+                # 领任务
+                url = f'https://tc.vip.iqiyi.com/taskCenter/task/joinTask?P00001={self.ck}&taskCode={taskCode}&platform=b6c13e26323c537d&lang=zh_CN&app_lm=cn'
+                if self.req(url)['code'] == 'A00000':
+                    msg += f'领取成功'
+                    time.sleep(10)
+                else:
+                    msg += f'领取失败' + '\n'
+                    continue
+                # 完成任务
+                url = f'https://tc.vip.iqiyi.com/taskCenter/task/notify?taskCode={taskCode}&P00001={self.ck}&platform=97ae2982356f69d8&lang=cn&bizSource=component_browse_timing_tasks&_={self.timestamp()}'
+                if self.req(url)['code'] == 'A00000':
+                    msg += f',完成成功'
+                    time.sleep(2)
+                else:
+                    msg += f',完成失败' + '\n'
+                    continue
+                # 领取奖励
+                url = f"https://tc.vip.iqiyi.com/taskCenter/task/getTaskRewards?P00001={self.ck}&taskCode={taskCode}&lang=zh_CN&platform=b2f2d9af351b8603"
                 price = self.req(url)['dataNew'][0]["value"]
                 self.print_now(f"领取{taskCodeList[taskCode]}任务奖励成功, 获得{price}点成长值")
-                log += f",获得{price}点成长值" + '\n'
+                msg += f",获得{price}点成长值" + '\n'
             except:
                 self.print_now(f"领取{taskCodeList[taskCode]}任务奖励可能出错了 也可能没出错 只是你今天跑了第二次")
-                log += f",任务奖励可能出错了 也可能没出错 只是你今天跑了第二次" + '\n'
+                msg += f",任务奖励可能出错了 也可能没出错 只是你今天跑了第二次" + '\n'
             time.sleep(5)
-        return log
+        return msg
 
     def lottery_draw(self, lottery=True):
+        msg = ' * '
         """
         查询剩余抽奖次数和抽奖
         True 抽
@@ -305,19 +367,24 @@ class Iqiyi:
         try:
             data = self.req(url, "get", params)
             if data.get("code") == 0:
-                log = f'抽奖成功, 获得{data["awardName"]}'
-                self.print_now(log)
-                return [data["daysurpluschance"], log]
+                msg += f'抽奖成功, 获得{data["awardName"]}'
+                self.print_now(msg)
+                return [data["daysurpluschance"], msg]
             elif data.get("code") == 3:
-                log = '抽奖成功, 但是获得奖励信息错误, 大概率是没用的开通会员优惠券'
-                self.print_now(log)
-                return [data["daysurpluschance"], log]
+                msg += '抽奖成功, 但是获得奖励信息错误, 大概率是没用的开通会员优惠券'
+                self.print_now(msg)
+                return [data["daysurpluschance"], msg]
             else:
-                self.print_now("抽奖结束")
-                return [0, "抽奖结束"]
+                msg += "抽奖结束"
+                self.print_now(msg)
+                return [0, msg]
         except:
-            self.print_now("抽奖失败")
-            return [0, "抽奖失败"]
+            msg += "抽奖失败"
+            self.print_now(msg)
+            return [0, msg]
+
+    def getUrl(self, time, dfp):
+        return f'https://msg.qy.net/b?u=f600a23f03c26507f5482e6828cfc6c5&pu={self.uid}&p1=1_10_101&v=5.2.66&ce={self.uuid(32)}&de=1616773143.1639632721.1639653680.29&c1=2&ve={self.uuid(32)}&ht=0&pt={randint(1000000000, 9999999999) / 1000000}&isdm=0&duby=0&ra=5&clt=&ps2=DIRECT&ps3=&ps4=&br=mozilla%2F5.0%20(windows%20nt%2010.0%3B%20win64%3B%20x64)%20applewebkit%2F537.36%20(khtml%2C%20like%20gecko)%20chrome%2F96.0.4664.110%20safari%2F537.36&mod=cn_s&purl=https%3A%2F%2Fwww.iqiyi.com%2Fv_1eldg8u3r08.html%3Fvfrm%3Dpcw_home%26vfrmblk%3D712211_cainizaizhui%26vfrmrst%3D712211_cainizaizhui_image1%26r_area%3Drec_you_like%26r_source%3D62%2540128%26bkt%3DMBA_PW_T3_53%26e%3Db3ec4e6c74812510c7719f7ecc8fbb0f%26stype%3D2&tmplt=2&ptid=01010031010000000000&os=window&nu=0&vfm=&coop=&ispre=0&videotp=0&drm=&plyrv=&rfr=https%3A%2F%2Fwww.iqiyi.com%2F&fatherid={randint(1000000000000000, 9999999999999999)}&stauto=1&algot=abr_v12-rl&vvfrom=&vfrmtp=1&pagev=playpage_adv_xb&engt=2&ldt=1&krv=1.1.85&wtmk=0&duration={randint(1000000, 9999999)}&bkt=&e=&stype=&r_area=&r_source=&s4={randint(100000, 999999)}_dianshiju_tbrb_image2&abtest=1707_B%2C1550_B&s3={randint(100000, 999999)}_dianshiju_tbrb&vbr={randint(100000, 999999)}&mft=0&ra1=2&wint=3&s2=pcw_home&bw=10&ntwk=18&dl={randint(10, 999)}.27999999999997&rn=0.{randint(1000000000000000, 9999999999999999)}&dfp={dfp}&stime={self.timestamp()}&r={randint(1000000000000000, 9999999999999999)}&hu=1&t=2&tm={time}&_={self.timestamp()}'
 
     def start(self):
         self.print_now("正在执行刷观影时长脚本 为减少风控 本过程运行时间较长 大概半个小时")
@@ -326,7 +393,7 @@ class Iqiyi:
             return resWatchTime
         totalTime = int(resWatchTime[1])
         if totalTime >= 7200:
-            log = f"你的账号今日观影时长大于2小时 不执行刷观影时长"
+            log = f" * 你的账号今日观影时长大于2小时 不执行刷观影时长"
             self.print_now(log)
             return [False, log]
         for i in range(150):
@@ -339,61 +406,55 @@ class Iqiyi:
                 self.print_now(f"观影时长现在已经刷到了{totalTime}秒, 数据同步有延迟, 仅供参考")
             if totalTime >= 7600:
                 break
-        return [True, f"观影时长现在已经刷到了{totalTime}秒, 数据同步有延迟, 仅供参考"]
+        return [True, f" * 观影时长现在已经刷到了{totalTime}秒, 数据同步有延迟, 仅供参考"]
 
     def main(self):
         time_now = time.localtime(int(time.time()))
         now = time.strftime("%Y-%m-%d %H:%M:%S", time_now)
-        log = "VIP会员签到任务\n" + now + '\n'
+        msg = "VIP会员签到任务\n" + now + '\n'
 
         if 1 == self.get_iqiyi_dfp:
             resDfp = self.get_dfp()
             if not resDfp[0]:
-                return log + resDfp[1]
+                return msg + resDfp[1]
         # 获取用户uid
         resUid = self.getUid()
         if not resUid[0]:
-            return log + resUid[1]
-        log += resUid[1] + '\n'
-
-        # 检查签名url
-        resSignUrl = self.getSignUrl()
-        if not resSignUrl[0]:
-            return log + resSignUrl[1]
+            return msg + resUid[1]
 
         # 刷观影时长
         resStart = self.start()
         if not resStart[0]:
-            log += resStart[1] + '\n'
+            msg += resStart[1] + '\n'
         else:
-            log += resStart[1] + '\n'
+            msg += resStart[1] + '\n'
 
         # 抽奖
         for i in range(10):
             resLottery = self.lottery_draw()
             if int(resLottery[0]) == 0:
                 break
-            log += resLottery[1] + '\n'
+            msg += resLottery[1] + '\n'
             time.sleep(3)
 
         # 签到
         resCheckIn = self.checkIn()
         if not resCheckIn[0]:
-            log += resCheckIn[1] + '\n'
+            msg += resCheckIn[1] + '\n'
         else:
-            log += resCheckIn[1] + '\n'
+            msg += resCheckIn[1] + '\n'
 
         # 完成日常任务
-        log += self.dailyTask()
+        msg += self.dailyTask()
 
         self.print_now(f"任务已经执行完成, 因爱奇艺观影时间同步较慢,这里等待3分钟再查询今日成长值信息,若不需要等待直接查询,请设置环境变量名 sleep_await = 0 默认为等待")
         if int(self.sleep_await) == 1:
             time.sleep(180)
 
         # 获取用户信息
-        log += self.get_userinfo()
+        msg += self.get_userinfo()
 
-        return log
+        return msg
 
 if __name__ == '__main__':
     data = get_data()

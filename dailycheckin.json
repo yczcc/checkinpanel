@@ -705,7 +705,7 @@
             "running": true
         },
         {
-            "name": "爱奇艺(新)",
+            "name": "爱奇艺签到加刷时长",
             "type": "cron",
             "time": "55 12 * * *",
             "job": {

@@ -23,7 +23,7 @@ class VQQ:
 
     def tx_videoApp_checkInIsDone(self, cookie):
         isDone = -1
-        log = ''
+        msg = ''
         # 任务状态
         url_taskList = 'https://vip.video.qq.com/rpc/trpc.new_task_system.task_system.TaskSystem/ReadTaskList?rpc_data=%7B%22business_id%22:%221%22,%22platform%22:3%7D'
         headers_taskList = {
@@ -43,17 +43,17 @@ class VQQ:
                     if 1 == task["task_status"]:
                         # 已完成
                         isDone = 1
-                        log = log + '\n标题:' + task["task_maintitle"] + '\n状态:' + task["task_subtitle"]
+                        msg = msg + '\n标题:' + task["task_maintitle"] + '\n状态:' + task["task_subtitle"]
                 else:
                     continue
-                return [isDone, log]
+                return [isDone, msg]
         except:
-            log = log + "获取状态异常，可能是cookie失效"
-        return [isDone, log]
+            msg = msg + "获取状态异常，可能是cookie失效"
+        return [isDone, msg]
 
     def tx_videoApp_checkIn(self, cookie):
         success = False
-        log = ''
+        msg = ''
         url_checkIn = 'https://vip.video.qq.com/rpc/trpc.new_task_system.task_system.TaskSystem/CheckIn?rpc_data=%7B%7D'
         headers_checkIn = {
             'user-agent': 'Mozilla/5.0 (Linux; Android 11; M2104K10AC Build/RP1A.200720.011; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/89.0.4389.72 MQQBrowser/6.2 TBS/046237 Mobile Safari/537.36 QQLiveBrowser/8.7.85.27058',
@@ -64,19 +64,19 @@ class VQQ:
         response_checkIn = requests.get(url_checkIn, headers=headers_checkIn)
         try:
             res_checkIn = json.loads(response_checkIn.text)
-            log = log + "\n签到获得v力值:" + str(res_checkIn['check_in_score'])
+            msg = msg + "\n签到获得v力值:" + str(res_checkIn['check_in_score'])
             success = True
         except:
             try:
                 res_1 = json.loads(response_checkIn.text)
-                log = log + "\n腾讯视频签到异常，返回内容：\n" + str(res_1)
+                msg = msg + "\n腾讯视频签到异常，返回内容：\n" + str(res_1)
             except:
-                log = log + "\n腾讯视频签到异常，无法返回内容"
-        return [success, log]
+                msg = msg + "\n腾讯视频签到异常，无法返回内容"
+        return [success, msg]
 
     def tx_videoApp_jifen(self, cookie):
         success = False
-        log = ''
+        msg = ''
         url_jifen = 'https://vip.video.qq.com/fcgi-bin/comm_cgi?name=spp_vscore_user_mashup&cmd=&otype=xjson&type=1'
         headers_jifen = {
             'user-agent': 'Mozilla/5.0 (Linux; Android 11; M2104K10AC Build/RP1A.200720.011; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/89.0.4389.72 MQQBrowser/6.2 TBS/046237 Mobile Safari/537.36 QQLiveBrowser/8.7.85.27058',
@@ -86,20 +86,20 @@ class VQQ:
         response_jifen = requests.get(url_jifen, headers=headers_jifen)
         try:
             res_jifen = json.loads(response_jifen.text)
-            log = log + "\n会员等级:" + str(res_jifen['lscore_info']['level']) + "\n积分:" + str(
+            msg = msg + "\n会员等级:" + str(res_jifen['lscore_info']['level']) + "\n积分:" + str(
                 res_jifen['cscore_info']['vip_score_total']) + "\nV力值:" + str(res_jifen['lscore_info']['score'])
             success = True
         except:
             try:
                 res_jifen = json.loads(response_jifen.text)
-                log = log + "\n腾讯视频领获取积分异常,返回内容:\n" + str(res_jifen)
+                msg = msg + "\n腾讯视频领获取积分异常,返回内容:\n" + str(res_jifen)
             except:
-                log = log + "\n腾讯视频获取积分异常,无法返回内容"
-        return [success, log]
+                msg = msg + "\n腾讯视频获取积分异常,无法返回内容"
+        return [success, msg]
 
     def tx_videoApp_userInfo(self, cookie):
         success = False
-        log = ''
+        msg = ''
         url_userInfo = 'https://vip.video.qq.com/rpc/trpc.query_vipinfo.vipinfo.QueryVipInfo/GetVipUserInfoH5'
         headers_userInfo = {
             'user-agent': 'Mozilla/5.0 (Linux; Android 11; M2104K10AC Build/RP1A.200720.011; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/89.0.4389.72 MQQBrowser/6.2 TBS/046237 Mobile Safari/537.36 QQLiveBrowser/8.7.85.27058',
@@ -110,49 +110,49 @@ class VQQ:
         response_userInfo = requests.post(url_userInfo, data=data, headers=headers_userInfo)
         try:
             res_userInfo = json.loads(response_userInfo.text)
-            log = log + "\nVIP开始时间:" + str(res_userInfo['beginTime']) + "\nVIP到期时间:" + str(
+            msg = msg + "\nVIP开始时间:" + str(res_userInfo['beginTime']) + "\nVIP到期时间:" + str(
                 res_userInfo['endTime'])
             if res_userInfo['endmsg'] != '':
-                log = log + '\nendmsg:' + res_userInfo['endmsg']
+                msg = msg + '\nendmsg:' + res_userInfo['endmsg']
             success = True
         except:
             try:
                 res_3 = json.loads(response_userInfo.text)
-                log = log + "\n腾讯视频领获取用户信息异常,返回内容:\n" + str(res_3)
+                msg = msg + "\n腾讯视频领获取用户信息异常,返回内容:\n" + str(res_3)
             except:
-                log = log + "\n腾讯视频获取用户信息异常,无法返回内容"
-        return [success, log]
+                msg = msg + "\n腾讯视频获取用户信息异常,无法返回内容"
+        return [success, msg]
 
     def tx_videoApp(self, qimei36, appid, openid, access_token, vuserid, login, ip):
         cookie = self.tx_videoApp_cookie(qimei36, appid, openid, access_token, vuserid, login, ip)
 
         time_now = time.localtime(int(time.time()))
         now = time.strftime("%Y-%m-%d %H:%M:%S", time_now)
-        log = "VIP会员签到任务\n" + now
+        msg = "VIP会员签到任务\n" + now
 
         res_checkInIsDone = self.tx_videoApp_checkInIsDone(cookie)
         if -1 == res_checkInIsDone[0]:
-            return log + res_checkInIsDone[1]
+            return msg + res_checkInIsDone[1]
         elif 0 == res_checkInIsDone[0]:
             # 签到
             res_checkIn = self.tx_videoApp_checkIn(cookie)
             if not res_checkIn[0]:
-                return log + res_checkIn[1]
-            log += res_checkIn[1]
+                return msg + res_checkIn[1]
+            msg += res_checkIn[1]
         else:
-            log += res_checkInIsDone[1]
+            msg += res_checkInIsDone[1]
 
         # 用户信息查询
         res_userInfo = self.tx_videoApp_userInfo(cookie)
         if not res_userInfo[0]:
-            return log + res_userInfo[1]
-        log += res_userInfo[1]
+            return msg + res_userInfo[1]
+        msg += res_userInfo[1]
 
         # 积分查询
         res_jifen = self.tx_videoApp_jifen(cookie)
         if not res_jifen[0]:
-            return log + res_jifen[1]
-        log += res_jifen[1]
+            return msg + res_jifen[1]
+        msg += res_jifen[1]
 
         # 观看
         # url_2 = 'https://vip.video.qq.com/rpc/trpc.new_task_system.task_system.TaskSystem/ProvideAward?rpc_data=%7B%22task_id%22:1%7D'
@@ -175,7 +175,7 @@ class VQQ:
         #     except:
         #         log = log + "\n腾讯视频领取观看v力值异常,无法返回内容"
 
-        return log
+        return msg
 
     def tx_videoWeb(self, login_cookie, auth_cookie):
         millisecond_time = round(time.time() * 1000)
