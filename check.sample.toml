@@ -418,3 +418,12 @@ _session_id = "kqCbZ1NDRW0NEcyxWJxxxxxx"
 # www.geekhub.com，抓取登录成功只有请求的cookie中的_session_id，eg：Cookie: _session_id=kqCbZ1NDRW0NEcyxWJxxxxxx
 [[GeekHub]]
 _session_id = "kqCbZ1NDRW0NEcyxWJxxxxxx"
+
+# 南方航空【WX】
+[[AirCS]]
+token = "xxx"
+
+# 携程 H5
+[[Ctrip]]
+cticket = "xx"
+guid = "xx"

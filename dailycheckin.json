@@ -773,6 +773,16 @@
                 "target": "checkin.js -env PYNAME=ck_womail.py"
             },
             "running": true
+        },
+        {
+            "name": "南方航空",
+            "type": "cron",
+            "time": "56 13 12 * * *",
+            "job": {
+                "type": "runjs",
+                "target": "checkin.js -env PYNAME=ck_air_cs.py"
+            },
+            "running": true
         }
     ]
 }
