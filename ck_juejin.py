@@ -111,6 +111,7 @@ class Juejin:
                 # 请求异常了
                 msg_all += resCurPoint[1] + '\n'
                 continue
+            msg_all += resCurPoint[1] + '\n'
 
             resGetSignStatus = self.getSignStatus(cookie, user_unique_id)
             if resGetSignStatus[0] < 0:
@@ -126,11 +127,11 @@ class Juejin:
                 if resDoSign[0]:
                     # 签到成功
                     lottery_msg = self.lottery(cookie,user_unique_id)["err_msg"]
-                    msg_all += ' * 抽奖任务:' + '\n\t' + "抽奖结果:" + lottery_msg
-            msg_all += "\n"
+                    msg_all += ' * 抽奖任务:' + '\n\t' + "抽奖结果:" + lottery_msg + "\n"
 
             resGetCoderCalendar = self.getCoderCalendar(cookie, user_unique_id)
             msg_all += resGetCoderCalendar[1] + '\n'
+            msg_all += '\n'
         return msg_all
 
 
