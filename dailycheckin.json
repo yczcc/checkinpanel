@@ -784,5 +784,16 @@
             },
             "running": true
         }
+        ,
+        {
+            "name": "美团米粒",
+            "type": "cron",
+            "time": "56 13 12 * * *",
+            "job": {
+                "type": "runjs",
+                "target": "checkin.js -env PYNAME=ck_meituan_ml.py"
+            },
+            "running": true
+        }
     ]
 }
