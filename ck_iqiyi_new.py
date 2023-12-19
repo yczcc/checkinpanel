@@ -160,7 +160,7 @@ class Iqiyi:
         data = self.req(url)
         msg = data['data']['growth']
         try:
-            self.user_info = f"用户信息查询成功: \n\t到期时间{msg['deadline']}\n\t当前等级为{msg['level']}\n\t今日获得成长值{msg['todayGrowthValue']}\n\t总成长值{msg['growthvalue']}\n\t距离下一等级还差{msg['distance']}成长值"
+            self.user_info = f"用户信息查询成功: \n\tVIP到期时间{msg['deadline']}\n\t当前等级为{msg['level']}\n\t今日获得成长值{msg['todayGrowthValue']}\n\t总成长值{msg['growthvalue']}\n\t距下一等级还差{msg['distance']}成长值"
             self.print_now(self.user_info)
         except:
             self.user_info = f"用户信息查询失败,未获取到用户信息"
@@ -311,7 +311,7 @@ class Iqiyi:
             "GetReward": "逛领福利频道"
         }
         for taskCode in taskCodeList:
-            msg += f' * 日常任务-{taskCodeList[taskCode]}'
+            msg += f' * 日常任务-{taskCodeList[taskCode]}:\n\t'
             try:
                 # 领任务
                 url = f'https://tc.vip.iqiyi.com/taskCenter/task/joinTask?P00001={self.ck}&taskCode={taskCode}&platform=b6c13e26323c537d&lang=zh_CN&app_lm=cn'

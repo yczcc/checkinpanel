@@ -186,6 +186,7 @@ user_id = ""
 # https://juejin.cn cookie
 [[JUEJIN]]
 cookie = "MONITOR_WEB_ID=xxxxxx; _ga=xxxxxx; _gid=xxxxxx; tt_scid=xxxxxx; n_mh=xxxxxx; sessionid=xxxxxx; sessionid_ss=xxxxxx; sid_guard=xxxxxx; sid_tt=xxxxxx; sid_ucp_v1=xxxxxx; ssid_ucp_v1=xxxxxx; uid_tt=xxxxxx; uid_tt_ss=xxxxxx; passport_auth_status=xxxxxx; passport_auth_status_ss=xxxxxx; _tea_utm_cache_2018=xxxxxx; MONITOR_DEVICE_ID=xxxxxx; passport_csrf_token=xxxxxx; passport_csrf_token_default=xxxxxx; s_v_web_id=xxxxxx; __tea_cookie_tokens_2608=xxxxxx; _tea_utm_cache_2608=xxxxxx"
+user_unique_id = "xxx"
 
 # 全民K歌【WEB】
 # https://kg.qq.com/index-pc.html cookie
