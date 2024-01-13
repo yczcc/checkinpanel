@@ -11,7 +11,6 @@ import hashlib
 import json
 import math
 import random
-import re
 import time
 from os import system, path
 from sys import exit, stdout
@@ -31,9 +30,11 @@ except:
     print("安装完成 脚本退出 请重新执行")
     exit(0)
 
+
 def print_now(content):
     print(content)
     stdout.flush()
+
 
 class Encrypt:
     def __init__(self, key, iv):
@@ -73,9 +74,11 @@ class Encrypt:
 
 # 获取i茅台的最新版本号
 def getMtVersion():
-    mt_version = "".join(re.findall('latest__version">(.*?)</p>',
-                                    requests.get('https://apps.apple.com/cn/app/i%E8%8C%85%E5%8F%B0/id1600482450').text,
-                                    re.S)).split(" ")[1]
+    # mt_version = "".join(re.findall('latest__version">(.*?)</p>',
+    #                                 requests.get('https://apps.apple.com/cn/app/i%E8%8C%85%E5%8F%B0/id1600482450').text,
+    #                                 re.S)).split(" ")[1]
+    mt_version = json.loads(
+        requests.get("https://itunes.apple.com/cn/lookup?id=1600482450").text)["results"][0]["version"]
     return mt_version
 
 
@@ -326,21 +329,25 @@ class IMaoTai:
         return params
 
     # 申购预约
-    def reservation(self, params: dict, mobile: str):
+    def reservation(self, params: dict, mobile: str) -> dict:
         timestamp_ms = int(time.time() * 1000)
         params.pop('userId')
         dict.update(self.HEADERS, {"MT-K": f'{timestamp_ms}'})
         dict.update(self.HEADERS, {"MT-Request-ID": f'{timestamp_ms}{random.randint(10000, 99999)}'})
-        responses = requests.post("https://app.moutai519.com.cn/xhr/front/mall/reservation/add", json=params,
-                                  headers=self.HEADERS)
+        responses = requests.post(
+            "https://app.moutai519.com.cn/xhr/front/mall/reservation/add",
+            json=params,
+            headers=self.HEADERS)
         if responses.status_code == 401:
-            print_now(f'[{mobile}],登录token失效，需要重新登录')
-            raise RuntimeError
+            msg = f'[{mobile}],登录token失效，需要重新登录'
+            print_now(msg)
+            return {"name": "申购结果", "value": msg}
         if '您的实名信息未完善或未通过认证' in responses.text:
-            print_now(f'[{mobile}],{responses.text}')
-            raise RuntimeError
-        print_now(
-            f'预约 : mobile:{mobile} :  response code : {responses.status_code}, response body : {responses.text}')
+            msg = f'[{mobile}],{responses.text}'
+        else:
+            msg = f'预约成功: mobile:{mobile} :  response code: {responses.status_code}, response body: {responses.text}'
+        print_now(msg)
+        return {"name": "申购结果", "value": msg}
 
     # 获取门店数据
     def get_shop_data(self, lat: str = '28.499562', lng: str = '102.182324'):
@@ -393,7 +400,7 @@ class IMaoTai:
         return p_c_map, dict(mt_shops_pc_data)
 
     # 获取用户耐力值奖励
-    def getUserEnergyAward(self, mobile: str):
+    def getUserEnergyAward(self, mobile: str) -> dict:
         """
         领取耐力
         """
@@ -408,8 +415,8 @@ class IMaoTai:
         response = requests.post('https://h5.moutai519.com.cn/game/isolationPage/getUserEnergyAward', cookies=cookies,
                                  headers=self.HEADERS, json={})
         # response.json().get('message') if '无法领取奖励' in response.text else "领取奖励成功"
-        print_now(
-            f'领取耐力 : mobile:{mobile} :  response code : {response.status_code}, response body : {response.text}')
+        msg = f'领取耐力 : mobile:{mobile} :  response code : {response.status_code}, response body : {response.text}'
+        return {"name": "小茅运", "value": msg}
 
     def main(self):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -432,6 +439,17 @@ class IMaoTai:
             lat = check_user.get('lat')
             lng = check_user.get('lng')
 
+            msg_user = [
+                {
+                    "name": "手机号",
+                    "value": f"{self.MOBILE}",
+                },
+                {
+                    "name": "省份城市",
+                    "value": f"{province}{city}",
+                },
+            ]
+
             p_c_map, source_data = self.get_shop_data(lat=lat, lng=lng)
             self.initHeaders(user_id=str(self.USER_ID), token=self.TOKEN, lat=lat, lng=lng)
             # 根据配置中，要预约的商品ID，城市 进行自动预约
@@ -446,14 +464,26 @@ class IMaoTai:
                     title = self.ITEM_MAP.get(item)
                     reservation_info = f'商品：{title}\n门店：{shop_info["name"]}'
                     print_now(reservation_info)
+                    msg_user.append({
+                        "name": "申购信息",
+                        "value": reservation_info,
+                    })
                     reservation_params = self.act_params(max_shop_id, item)
-                    self.reservation(reservation_params, self.MOBILE)
-                    msg += reservation_info + '\n\n'
-                    self.getUserEnergyAward(self.MOBILE)
+                    resReservation = self.reservation(reservation_params, self.MOBILE)
+                    msg_user.append(resReservation)
+                    resAward = self.getUserEnergyAward(self.MOBILE)
+                    msg_user.append(resAward)
             except BaseException as e:
-                msg += self.MOBILE + '申购预约失败\n\n'
                 print_now(e)
+                msg_user.append(
+                    {
+                        "name": "申购结果",
+                        "value": self.MOBILE + '申购预约失败\n' + e,
+                    }
+                )
 
+            msg_user = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg_user])
+            msg += msg_user + '\n\n'
         return msg
 
 
