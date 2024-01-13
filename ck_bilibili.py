@@ -19,9 +19,7 @@ class BiliBili:
     @staticmethod
     def get_nav(session: requests.Session) -> tuple:
         """GET 登录基本信息-导航栏用户信息
-
         https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/login/login_info.md
-
         :param requests.Session session:
         :return (str, int, int, bool, int, int):
         (用户昵称, 用户 mid, 登录状态, 硬币数, 会员类型, 当前经验)
@@ -55,9 +53,7 @@ class BiliBili:
     @staticmethod
     def sign_live(session: requests.Session) -> str:
         """GET 直播间用户实用 API-直播签到
-
         https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/live/user.md
-
         :param requests.Session session:
         :return str: 直播签到结果，成功/已签/失败/异常
         """
@@ -82,9 +78,7 @@ class BiliBili:
     @staticmethod
     def clockin_manga(session: requests.Session, platform: str = "android") -> str:
         """POST 模拟漫画客户端签到
-
         https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/manga/ClockIn.md
-
         :param requests.Session session:
         :param str platform: 签到平台, defaults to "android"
         :return str: 漫画客户端签到结果，成功/已签/失败/异常
@@ -106,13 +100,9 @@ class BiliBili:
         return msg
 
     @staticmethod
-    def receive_vip_privilege(
-        session: requests.Session, bili_jct: str, receive_type: int = 1
-    ) -> dict:
+    def receive_vip_privilege(session: requests.Session, bili_jct: str, receive_type: int = 1) -> dict:
         """POST 大会员兑换福利-兑换卡券
-
         https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/user/vip.md
-
         :param requests.Session session:
         :param str bili_jct: Cookie bili_jct 字段
         :param int receive_type: 1~5: B币券 会员购优惠券 漫画福利券 会员购包邮券 漫画商城优惠券, defaults to 1
@@ -125,7 +115,6 @@ class BiliBili:
     @staticmethod
     def get_manga_vip_reward(session: requests.Session) -> dict:
         """POST 获取漫画大会员福利
-
         :param requests.Session session:
         :return dict: json 回复
         """
@@ -134,16 +123,14 @@ class BiliBili:
 
     @staticmethod
     def report_video_history(
-        session: requests.Session,
-        bili_jct: str,
-        aid: int,
-        cid: int,
-        progress: int = 300,
+            session: requests.Session,
+            bili_jct: str,
+            aid: int,
+            cid: int,
+            progress: int = 300,
     ) -> dict:
         """POST 视频观看数据上报-上报观看进度（双端）
-
         https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/video/report.md
-
         :param requests.Session session:
         :param str bili_jct: Cookie bili_jct 字段
         :param int aid: 稿件 avid
@@ -172,12 +159,12 @@ class BiliBili:
 
     @staticmethod
     def get_followings(
-        session: requests.Session,
-        uid: int,
-        pn: int = 1,
-        ps: int = 50,
-        order: str = "desc",
-        order_type: str = "attention",
+            session: requests.Session,
+            uid: int,
+            pn: int = 1,
+            ps: int = 50,
+            order: str = "desc",
+            order_type: str = "attention",
     ) -> dict:
         """GET 用户关系相关-查询用户关注明细
 
@@ -203,13 +190,13 @@ class BiliBili:
 
     @staticmethod
     def search_space_arc(
-        session: requests.Session,
-        uid: int,
-        pn: int = 1,
-        ps: int = 100,
-        tid: int = 0,
-        order: str = "pubdate",
-        keyword: str = "",
+            session: requests.Session,
+            uid: int,
+            pn: int = 1,
+            ps: int = 100,
+            tid: int = 0,
+            order: str = "pubdate",
+            keyword: str = "",
     ) -> list:
         """GET 获取指定 up 主空间视频投稿信息
 
@@ -246,7 +233,7 @@ class BiliBili:
 
     @staticmethod
     def pay_elec_new(
-        session: requests.Session, bili_jct: str, uid: int, num: int = 50
+            session: requests.Session, bili_jct: str, uid: int, num: int = 50
     ) -> dict:
         """POST B 币方式充电-新版本 B 币充电
 
@@ -271,11 +258,11 @@ class BiliBili:
 
     @staticmethod
     def add_coin(
-        session: requests.Session,
-        bili_jct: str,
-        aid: int,
-        num: int = 1,
-        select_like: int = 1,
+            session: requests.Session,
+            bili_jct: str,
+            aid: int,
+            num: int = 1,
+            select_like: int = 1,
     ) -> dict:
         """POST 给指定 av 号视频投币
 
@@ -327,7 +314,7 @@ class BiliBili:
 
     @staticmethod
     def get_dynamic_videos(
-        session: requests.Session, rid: int = 1, ps: int = 6
+            session: requests.Session, rid: int = 1, ps: int = 6
     ) -> list:
         """GET 分区最新视频-获取分区最新视频列表
 
@@ -376,8 +363,8 @@ class BiliBili:
             session.headers.update(
                 {
                     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko)"
-                    "Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.64",
+                                  "AppleWebKit/537.36 (KHTML, like Gecko)"
+                                  "Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.64",
                     "Referer": "https://www.bilibili.com/",
                     "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
                     "Connection": "keep-alive",
