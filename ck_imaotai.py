@@ -331,24 +331,36 @@ class IMaoTai:
 
     # 申购预约
     def reservation(self, params: dict, mobile: str) -> dict:
+        resMsg = {"name": " * 申购结果", "value": ''}
+        resMsgValue = '\n\t'
         timestamp_ms = int(time.time() * 1000)
         params.pop('userId')
         dict.update(self.HEADERS, {"MT-K": f'{timestamp_ms}'})
         dict.update(self.HEADERS, {"MT-Request-ID": f'{timestamp_ms}{random.randint(10000, 99999)}'})
-        responses = requests.post(
+        res = requests.post(
             "https://app.moutai519.com.cn/xhr/front/mall/reservation/add",
             json=params,
             headers=self.HEADERS)
-        if responses.status_code == 401:
+        if res.status_code == 401:
             msg = f'[{mobile}],登录token失效，需要重新登录'
             print_now(msg)
-            return {"name": "申购结果", "value": msg}
-        if '您的实名信息未完善或未通过认证' in responses.text:
-            msg = f'[{mobile}],{responses.text}'
+            resMsgValue += msg
+            resMsg['value'] = resMsgValue
+            return resMsg
+
+        resJson = res.json()
+        resJsonCode = resJson['code']
+        if 2000 == resJsonCode:
+            resJsonData = resJson['data']
+            msg = f'申购成功, {resJsonData["successDesc"]}'
+        elif 4022 == resJsonCode:
+            msg = '已申购(' + resJson["message"] + ')'
         else:
-            msg = f'预约成功: mobile:{mobile} :  response code: {responses.status_code}, response body: {responses.text}'
+            msg = '申购失败(code=' + str(resJsonCode) + ',message=' + resJson["message"] + ')'
         print_now(msg)
-        return {"name": "申购结果", "value": msg}
+        resMsgValue += msg
+        resMsg['value'] = resMsgValue
+        return resMsg
 
     # 获取门店数据
     def get_shop_data(self, lat: str = '28.499562', lng: str = '102.182324'):
@@ -400,8 +412,10 @@ class IMaoTai:
 
         return p_c_map, dict(mt_shops_pc_data)
 
-    # 获取用户耐力值奖励
-    def getUserEnergyAward(self, mobile: str) -> dict:
+    # 获取小茅运用户耐力值奖励
+    def getXmyUserEnergyAward(self) -> dict:
+        resMsg = {"name": " * 小茅运每日申购奖励", "value": ''}
+        resMsgValue = '\n\t'
         """
         领取耐力
         """
@@ -413,11 +427,19 @@ class IMaoTai:
         timestamp_ms = int(time.time() * 1000)
         dict.update(self.HEADERS, {"MT-K": f'{timestamp_ms}'})
         dict.update(self.HEADERS, {"MT-Request-ID": f'{timestamp_ms}{random.randint(10000, 99999)}'})
-        response = requests.post('https://h5.moutai519.com.cn/game/isolationPage/getUserEnergyAward', cookies=cookies,
-                                 headers=self.HEADERS, json={})
-        # response.json().get('message') if '无法领取奖励' in response.text else "领取奖励成功"
-        msg = f'领取耐力 : mobile:{mobile} :  response code : {response.status_code}, response body : {response.text}'
-        return {"name": "小茅运", "value": msg}
+        res = requests.post('https://h5.moutai519.com.cn/game/isolationPage/getUserEnergyAward', cookies=cookies,
+                            headers=self.HEADERS, json={})
+        resJson = res.json()
+        resJsonCode = resJson['code']
+        if 2000 == resJsonCode:
+            resJsonData = resJson['data']
+            msg = f'领取耐力成功, {resJsonData["successDesc"]}'
+        else:
+            msg = '领取耐力失败(code=' + str(resJsonCode) + ',message=' + resJson["message"] + ')'
+        print_now(msg)
+        resMsgValue += msg
+        resMsg['value'] = resMsgValue
+        return resMsg
 
     # 获取预约申购详情
     def getReservationDetail(self, reservationId: int) -> dict:
@@ -462,11 +484,11 @@ class IMaoTai:
                 title = itemVO.get('title')
                 price = itemVO.get('price')
                 count = itemVO.get('count')
-                msg += title + ', 价格:' + str(price) + ', 数量:' + str(count)
+                msg += title + ', 价格: ' + str(price) + ', 数量: ' + str(count)
                 msg += '\n\t'
-            msg += '店铺: '
+            msg += '门店: '
             shopVO = resQueryData['shopVO']
-            msg += shopVO['name'] + ', 地址:' + shopVO['fullAddress']
+            msg += shopVO['name'] + ', 地址: ' + shopVO['fullAddress']
             msg += '\n\t'
 
             resMsgValue += msg
@@ -525,104 +547,115 @@ class IMaoTai:
             resMsg['value'] = resMsgValue
         return resMsg
 
+    # 执行申购预约
+    def runReservation(self):
+        msg = ''
+        time_now = datetime.datetime.now().time()
+        if datetime.time(9, 00) > time_now or time_now > datetime.time(10, 00):
+            msg += '不在申购时间段内'
+            return msg
+
+        # 获取当日session id
+        self.get_current_session_id()
+
+        for check_user in self.check_items:
+            self.MOBILE = check_user.get('mobile')
+            self.TOKEN = check_user.get('token')
+            self.USER_ID = check_user.get('userId')
+            self.DEVICE_ID = check_user.get('deviceId')
+            province = check_user.get('province')
+            city = check_user.get('city')
+            lat = check_user.get('lat')
+            lng = check_user.get('lng')
+
+            msg_user = [
+                {
+                    "name": " * 手机号",
+                    "value": f"{self.MOBILE}",
+                },
+                {
+                    "name": " * 省份城市",
+                    "value": f"{province}{city}",
+                },
+            ]
+
+            p_c_map, source_data = self.get_shop_data(lat=lat, lng=lng)
+            self.initHeaders(user_id=str(self.USER_ID), token=self.TOKEN, lat=lat, lng=lng)
+            # 根据配置中，要预约的商品ID，城市 进行自动预约
+            try:
+                for item in self.ITEM_CODES:
+                    max_shop_id = self.get_location_count(province=province, city=city, item_code=item,
+                                                          p_c_map=p_c_map, source_data=source_data, lat=lat, lng=lng)
+                    print_now(f'max shop id : {max_shop_id}')
+                    if max_shop_id == '0':
+                        continue
+                    shop_info = source_data.get(str(max_shop_id))
+                    title = self.ITEM_MAP.get(item)
+                    reservation_info = f'\n\t商品: {title}\n\t门店: {shop_info["name"]} , 地址: {shop_info["address"]}'
+                    print_now(reservation_info)
+                    msg_user.append({
+                        "name": " * 申购信息",
+                        "value": reservation_info,
+                    })
+                    reservation_params = self.act_params(max_shop_id, item)
+                    resReservation = self.reservation(reservation_params, self.MOBILE)
+                    msg_user.append(resReservation)
+                    resAward = self.getXmyUserEnergyAward()
+                    msg_user.append(resAward)
+            except BaseException as e:
+                print_now(e)
+                msg_user.append(
+                    {
+                        "name": "申购结果",
+                        "value": self.MOBILE + '申购预约失败\n' + e,
+                    }
+                )
+            msg_user = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg_user])
+            msg += msg_user + '\n\n'
+        return msg
+
+    # 执行获取预约详情
+    def runGetReservation(self):
+        msg = ''
+        # 获取当日session id
+        self.get_current_session_id()
+
+        for check_user in self.check_items:
+            self.MOBILE = check_user.get('mobile')
+            self.TOKEN = check_user.get('token')
+            self.USER_ID = check_user.get('userId')
+            self.DEVICE_ID = check_user.get('deviceId')
+            province = check_user.get('province')
+            city = check_user.get('city')
+            lat = check_user.get('lat')
+            lng = check_user.get('lng')
+
+            msg_user = [
+                {
+                    "name": " * 手机号",
+                    "value": f"{self.MOBILE}",
+                },
+                {
+                    "name": " * 省份城市",
+                    "value": f"{province}{city}",
+                },
+            ]
+
+            self.initHeaders(user_id=str(self.USER_ID), token=self.TOKEN, lat=lat, lng=lng)
+            resReservation = self.getReservationList()
+            msg_user.append(resReservation)
+            msg_user = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg_user])
+            msg += msg_user + '\n\n'
+        return msg
+
     def main(self, param_type: int):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         msg = "申购预约任务\n" + now + '\n'
 
         if 1 == param_type:
-            time_now = datetime.datetime.now().time()
-            if datetime.time(9, 00) > time_now or time_now > datetime.time(10, 00):
-                msg += '不在申购时间段内'
-                return msg
-
-            # 获取当日session id
-            self.get_current_session_id()
-
-            for check_user in self.check_items:
-                self.MOBILE = check_user.get('mobile')
-                self.TOKEN = check_user.get('token')
-                self.USER_ID = check_user.get('userId')
-                self.DEVICE_ID = check_user.get('deviceId')
-                province = check_user.get('province')
-                city = check_user.get('city')
-                lat = check_user.get('lat')
-                lng = check_user.get('lng')
-
-                msg_user = [
-                    {
-                        "name": " * 手机号",
-                        "value": f"{self.MOBILE}",
-                    },
-                    {
-                        "name": " * 省份城市",
-                        "value": f"{province}{city}",
-                    },
-                ]
-
-                p_c_map, source_data = self.get_shop_data(lat=lat, lng=lng)
-                self.initHeaders(user_id=str(self.USER_ID), token=self.TOKEN, lat=lat, lng=lng)
-                # 根据配置中，要预约的商品ID，城市 进行自动预约
-                try:
-                    for item in self.ITEM_CODES:
-                        max_shop_id = self.get_location_count(province=province, city=city, item_code=item,
-                                                              p_c_map=p_c_map,
-                                                              source_data=source_data, lat=lat, lng=lng)
-                        print_now(f'max shop id : {max_shop_id}')
-                        if max_shop_id == '0':
-                            continue
-                        shop_info = source_data.get(str(max_shop_id))
-                        title = self.ITEM_MAP.get(item)
-                        reservation_info = f'商品：{title}\n门店：{shop_info["name"]}'
-                        print_now(reservation_info)
-                        msg_user.append({
-                            "name": "申购信息",
-                            "value": reservation_info,
-                        })
-                        reservation_params = self.act_params(max_shop_id, item)
-                        resReservation = self.reservation(reservation_params, self.MOBILE)
-                        msg_user.append(resReservation)
-                        resAward = self.getUserEnergyAward(self.MOBILE)
-                        msg_user.append(resAward)
-                except BaseException as e:
-                    print_now(e)
-                    msg_user.append(
-                        {
-                            "name": "申购结果",
-                            "value": self.MOBILE + '申购预约失败\n' + e,
-                        }
-                    )
-                msg_user = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg_user])
-                msg += msg_user + '\n\n'
+            msg += self.runReservation()
         elif 2 == param_type:
-            # 获取当日session id
-            self.get_current_session_id()
-
-            for check_user in self.check_items:
-                self.MOBILE = check_user.get('mobile')
-                self.TOKEN = check_user.get('token')
-                self.USER_ID = check_user.get('userId')
-                self.DEVICE_ID = check_user.get('deviceId')
-                province = check_user.get('province')
-                city = check_user.get('city')
-                lat = check_user.get('lat')
-                lng = check_user.get('lng')
-
-                msg_user = [
-                    {
-                        "name": " * 手机号",
-                        "value": f"{self.MOBILE}",
-                    },
-                    {
-                        "name": " * 省份城市",
-                        "value": f"{province}{city}",
-                    },
-                ]
-
-                self.initHeaders(user_id=str(self.USER_ID), token=self.TOKEN, lat=lat, lng=lng)
-                resReservation = self.getReservationList()
-                msg_user.append(resReservation)
-                msg_user = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg_user])
-                msg += msg_user + '\n\n'
+            msg += self.runGetReservation()
         else:
             msg += "运行参数错误,param_type=" + str(param_type)
         return msg
