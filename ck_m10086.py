@@ -22,7 +22,7 @@ class M10086:
         stdout.flush()
 
     def update_token(self, refresh_token):
-        url = "https://auth.aliyundrive.com/v2/account/token"
+        url = "https://"
         data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
         response = requests.post(url=url, json=data).json()
         access_token = response["access_token"]
@@ -31,7 +31,7 @@ class M10086:
     def sign_records(self, token):
         timestamp_s = int(time.time())
         nonce = random.randint(100000, 999999)
-        url = "https://tm-web.pin-dao.cn/user/sign/records"
+        url = "https://"
         headers = {
             "Host": "tm-web.pin-dao.cn",
             "Accept": "application/json, text/plain, */*",
@@ -150,7 +150,7 @@ if __name__ == "__main__":
 
     _check_items = [{
         "refresh_token": "",
-        "token": "eyJhbGciOiJIUzI1NiJ9.eyJ1bmlvbkNvZGUiOiJQMTk4NDEyMTIwNjc5Nzg0NTIxIiwidXNlcklkIjoiMTg2NTc2MzY3IiwiYnJhbmQiOiIyNjAwMDI1MiIsInBob25lIjoib2I5eUE0czZlX1ktRVFFcjRXYVA2YWJMN3Z6SSIsImlzcyI6InBkLXBhc3Nwb3J0Iiwic3ViIjoiMTg2NTc2MzY3IiwiaWF0IjoxNzAwMjg5MDY1LCJleHAiOjE3MTA2NTcwNjV9.Nzin6dIilDraGm2AkgsOKfXsZAfPn_oZodusTLm7mfY"
+        "token": ".."
     }]
     result = M10086(check_items=_check_items).main()
     # send("奈雪", result)
