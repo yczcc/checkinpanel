@@ -428,3 +428,10 @@ token = "xxx"
 [[Ctrip]]
 cticket = "xx"
 guid = "xx"
+
+# 阿里云盘
+# # refresh_token获取教程：
+# 一、进入到阿里云盘官网并且成功登录 https://www.alipan.com/drive
+# 二、按F12，进入开发者工具模式，在顶上菜单栏点 Application ，然后在左边菜单找到 Local storage 下面的 https://www.alipan.com/ 这个域名，点到这个域名会看到有一个 key为 token 选项，再点 token (json串)，就找到 json中key为 refresh_token的值就是。
+[[ALIYUN]]
+refresh_token = "xx"

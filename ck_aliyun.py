@@ -10,10 +10,16 @@ import requests
 import os
 from sys import exit, stdout
 
+from notify_mtr import send
+from utils import get_data
+
 ##变量export ali_refresh_token=''
-ali_refresh_token=os.getenv("ali_refresh_token").split('&')
+# ali_refresh_token=os.getenv("ali_refresh_token").split('&')
 #refresh_token是一成不变的呢，我们使用它来更新签到需要的access_token
 #refresh_token获取教程：https://github.com/bighammer-link/Common-scripts/wiki/%E9%98%BF%E9%87%8C%E4%BA%91%E7%9B%98refresh_token%E8%8E%B7%E5%8F%96%E6%96%B9%E6%B3%95
+# refresh_token获取教程：
+# 一、进入到阿里云盘官网并且成功登录 https://www.alipan.com/drive
+# 二、按F12，进入开发者工具模式，在顶上菜单栏点 Application ，然后在左边菜单找到 Local storage 下面的 https://www.alipan.com/ 这个域名，点到这个域名会看到有一个 key为 token 选项，再点 token (json串)，就找到 json中key为 refresh_token的值就是。
 # ali_refresh_token = os.getenv("ali_refresh_token")
 
 class ALiYun:
@@ -24,84 +30,96 @@ class ALiYun:
         print(content)
         stdout.flush()
 
-    # 使用refresh_token更新access_token
     def update_token(self, refresh_token):
-        url = 'https://auth.aliyundrive.com/v2/account/token'
+        url = "https://auth.aliyundrive.com/v2/account/token"
         data = {
-            'grant_type': 'refresh_token',
-            'refresh_token': refresh_token
+            "grant_type": "refresh_token",
+            "app_id": "25dzX3vbYqktVxyX",
+            "refresh_token": refresh_token
         }
         try:
             response = requests.post(url=url, json=data).json()
-            access_token = response['access_token']
-            return [True, access_token]
-        except:
-            msg = " * 请求update_token api失败 最大可能是refresh_token失效了 也可能是网络问题"
-            self.print_now(msg)
-        return [False, msg]
+            if 'access_token' in response:
+                access_token = response["access_token"]
+                return [True, access_token]
+            return [False, "更新token失败，" + response["message"]]
+        except Exception as e:
+            self.print_now("更新token异常")
+            self.print_now(e)
+        return [False, "更新token异常，请检查refresh_token是否有效"]
 
-    # 签到函数
-    def daily_check(self, access_token):
-        url_sign = 'https://member.aliyundrive.com/v1/activity/sign_in_list'
-        headers = {
-            'Authorization': access_token,
-            'Content-Type': 'application/json'
-        }
+    def sign(self, access_token):
+        url = "https://member.aliyundrive.com/v1/activity/sign_in_list"
+        headers = {"Authorization": access_token, "Content-Type": "application/json"}
         try:
-            response_sign = requests.post(url=url_sign, headers=headers, json={}).text
-            result_sign = json.loads(response_sign)
-            sign_days = result_sign['result']['signInCount']
-            if 'success' not in result_sign:
-                return [False, "签到失败"]
-            self.print_now('签到成功')
-            for i, j in enumerate(result_sign['result']['signInLogs']):
-                if j['status'] == 'miss':
-                    day_json = result_sign['result']['signInLogs'][i - 1]
-                    if not day_json['isReward']:
-                        contents = '签到成功，今日未获得奖励'
-                    else:
-                        contents = '本月累计签到{}天,今日签到获得{}{}'.format(result_sign['result']['signInCount'],
-                                                                              day_json['reward']['name'],
-                                                                              day_json['reward']['description'])
-                    self.print_now(contents)
-                    return [True, contents]
-            # data = {
-            #     'signInDay': sign_days
-            # }
-            # url_reward = 'https://member.aliyundrive.com/v1/activity/sign_in_reward'
-            # resp2 = requests.post(url=url_reward, headers=headers, data=json.dumps(data))
-            # result2 = json.loads(resp2.text)
-            # print(result2)
-        except:
-            msg = " 签到失败"
-            self.print_now(msg)
-        return [False, msg]
+            result = requests.post(url=url, headers=headers, json={}).json()
+            sign_days = result["result"]["signInCount"]
+            data = {"signInDay": sign_days}
+            url_reward = "https://member.aliyundrive.com/v1/activity/sign_in_reward"
+            requests.post(url=url_reward, headers=headers, data=json.dumps(data))
+            if "success" in result:
+                self.print_now("签到成功")
+                for i, j in enumerate(result["result"]["signInLogs"]):
+                    if j["status"] == "miss":
+                        day_json = result["result"]["signInLogs"][i - 1]
+                        if not day_json["isReward"]:
+                            msg = [
+                                {
+                                    "name": "累计签到",
+                                    "value": result["result"]["signInCount"],
+                                },
+                                {
+                                    "name": "阿里云盘",
+                                    "value": "签到成功，今日未获得奖励",
+                                }
+                            ]
+                        else:
+                            msg = [
+                                {
+                                    "name": "累计签到",
+                                    "value": result["result"]["signInCount"],
+                                },
+                                {
+                                    "name": "阿里云盘",
+                                    "value": "获得奖励：{}{}".format(
+                                        day_json["reward"]["name"],
+                                        day_json["reward"]["description"],
+                                    ),
+                                },
+                            ]
 
-    def mian(self):
+                        return msg
+            else:
+                msg = "签到失败，" + result["message"]
+                self.print_now(msg)
+                return [{"name": "阿里云盘", "value": msg}]
+        except Exception as e:
+            self.print_now("签到异常")
+            self.print_now(e)
+        return [{"name": "阿里云盘", "value": "签到异常，请检查refresh_token是否有效"}]
+
+    def main(self):
         msg_all = ""
         i = 0
         for check_item in self.check_items:
             i += 1
             print(f'开始帐号{i}签到')
             refresh_token = check_item["refresh_token"]
-            resUpdateToken = self.update_token(refresh_token)
-            if not resUpdateToken[0]:
-                msg_all += resUpdateToken[1] + '\n'
-                continue
-            access_token = resUpdateToken[1]
-            resDailyCheck = self.daily_check(access_token)
-            if not resDailyCheck[0]:
-                msg_all += resDailyCheck[1] + '\n'
-                continue
-            msg_all += resDailyCheck[1] + '\n'
+            access_token = self.update_token(refresh_token)
+            if access_token[0]:
+                msg = self.sign(access_token[1])
+            else:
+                msg = [{"name": "阿里云盘", "value": access_token[1]}]
+            msg = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg])
+            msg_all += msg + '\n'
         return msg_all
 
 if __name__ == "__main__":
-    # _data = get_data()
-    # _check_items = _data.get("ALIYUN", [])
+    _data = get_data()
+    _check_items = _data.get("ALIYUN", [])
 
-    _check_items = [{
-        "refresh_token" : ""
-    }]
+    # _check_items = [{
+        # "refresh_token" : ""
+    # }]
     result = ALiYun(check_items=_check_items).main()
-    # send("阿里云盘", result)
+    send("阿里云盘", result)
