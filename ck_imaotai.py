@@ -337,29 +337,38 @@ class IMaoTai:
         params.pop('userId')
         dict.update(self.HEADERS, {"MT-K": f'{timestamp_ms}'})
         dict.update(self.HEADERS, {"MT-Request-ID": f'{timestamp_ms}{random.randint(10000, 99999)}'})
-        res = requests.post(
-            "https://app.moutai519.com.cn/xhr/front/mall/reservation/add",
-            json=params,
-            headers=self.HEADERS)
-        if res.status_code == 401:
-            msg = f'[{mobile}],登录token失效，需要重新登录'
+        try:
+            res = requests.post("https://app.moutai519.com.cn/xhr/front/mall/reservation/add",
+                                json=params, headers=self.HEADERS)
+            if res.status_code == 401:
+                msg = f'[{mobile}],登录token失效，需要重新登录'
+                print_now(msg)
+                resMsgValue += msg
+                resMsg['value'] = resMsgValue
+                return resMsg
+            resJson = res.json()
+            if 'code' in resJson:
+                resJsonCode = resJson['code']
+                if 2000 == resJsonCode:
+                    resJsonData = resJson['data']
+                    msg = f'申购成功, {resJsonData["successDesc"]}'
+                elif 4022 == resJsonCode:
+                    msg = '已申购(' + resJson["message"] + ')'
+                else:
+                    msg = '申购失败(code=' + str(resJsonCode)
+                    if 'message' in resJson:
+                        msg += ',message=' + resJson["message"]
+                    msg += ')'
+                print_now(msg)
+                resMsgValue += msg
+                resMsg['value'] = resMsgValue
+                return resMsg
+        except Exception as e:
+            msg = "申购请求异常 最大可能是token失效了 也可能是网络问题"
             print_now(msg)
+            print_now(e)
             resMsgValue += msg
             resMsg['value'] = resMsgValue
-            return resMsg
-
-        resJson = res.json()
-        resJsonCode = resJson['code']
-        if 2000 == resJsonCode:
-            resJsonData = resJson['data']
-            msg = f'申购成功, {resJsonData["successDesc"]}'
-        elif 4022 == resJsonCode:
-            msg = '已申购(' + resJson["message"] + ')'
-        else:
-            msg = '申购失败(code=' + str(resJsonCode) + ',message=' + resJson["message"] + ')'
-        print_now(msg)
-        resMsgValue += msg
-        resMsg['value'] = resMsgValue
         return resMsg
 
     # 获取门店数据
@@ -427,18 +436,35 @@ class IMaoTai:
         timestamp_ms = int(time.time() * 1000)
         dict.update(self.HEADERS, {"MT-K": f'{timestamp_ms}'})
         dict.update(self.HEADERS, {"MT-Request-ID": f'{timestamp_ms}{random.randint(10000, 99999)}'})
-        res = requests.post('https://h5.moutai519.com.cn/game/isolationPage/getUserEnergyAward', cookies=cookies,
-                            headers=self.HEADERS, json={})
-        resJson = res.json()
-        resJsonCode = resJson['code']
-        if 2000 == resJsonCode:
-            resJsonData = resJson['data']
-            msg = f'领取耐力成功, {resJsonData["successDesc"]}'
-        else:
-            msg = '领取耐力失败(code=' + str(resJsonCode) + ',message=' + resJson["message"] + ')'
-        print_now(msg)
-        resMsgValue += msg
-        resMsg['value'] = resMsgValue
+        try:
+            resJson = requests.post('https://h5.moutai519.com.cn/game/isolationPage/getUserEnergyAward', cookies=cookies,
+                                headers=self.HEADERS, json={}).json()
+            if 'code' in resJson:
+                resJsonCode = resJson['code']
+                if 2000 == resJsonCode:
+                    resJsonData = resJson['data']
+                    msg = f'领取耐力成功, {resJsonData["successDesc"]}'
+                else:
+                    msg = '领取耐力失败(code=' + str(resJsonCode)
+                    if 'message' in resJson:
+                        msg += ',message=' + resJson["message"]
+                    msg += ')'
+                print_now(msg)
+                resMsgValue += msg
+                resMsg['value'] = resMsgValue
+                return resMsg
+            else:
+                msg = '领取耐力失败(resJson=' + json.dumps(resJson) + ')'
+                print_now(resJson)
+                resMsgValue += msg
+                resMsg['value'] = resMsgValue
+                return resMsg
+        except Exception as e:
+            msg = "领取耐力请求异常 最大可能是token失效了 也可能是网络问题"
+            print_now(msg)
+            print_now(e)
+            resMsgValue += msg
+            resMsg['value'] = resMsgValue
         return resMsg
 
     # 获取预约申购详情
@@ -493,9 +519,10 @@ class IMaoTai:
 
             resMsgValue += msg
             resMsg['value'] = resMsgValue
-        except:
-            msg = "请求失败 最大可能是token失效了 也可能是网络问题"
+        except Exception as e:
+            msg = "申购详情请求异常 最大可能是token失效了 也可能是网络问题"
             print_now(msg)
+            print_now(e)
             resMsgValue += msg
             resMsg['value'] = resMsgValue
         return resMsg
@@ -607,7 +634,7 @@ class IMaoTai:
                 msg_user.append(
                     {
                         "name": "申购结果",
-                        "value": self.MOBILE + '申购预约失败\n' + e,
+                        "value": self.MOBILE + '申购预约失败',
                     }
                 )
             msg_user = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg_user])
