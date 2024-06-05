@@ -18,6 +18,8 @@ from utils_env import get_env_int
 import time
 import traceback
 
+import exception
+
 class ClientApi(ABC):
     def __init__(self):
         self.cid = ""
@@ -127,9 +129,11 @@ class QLClient(ClientApi):
 def get_client():
     env_type = get_env_int()
     if env_type == 5 or env_type == 6:
-        check_data = get_data()
-        return QLClient(check_data.get("RANDOM", [[]])[0])
-
+        try:
+            check_data = get_data()
+            return QLClient(check_data.get("RANDOM", [[]])[0])
+        except exception.CustomException as e:
+            send("随机定时", e.error_info)
 
 msg = "null"
 try:
@@ -138,6 +142,7 @@ try:
 except ValueError as e:
     msg = "配置错误：" + str(e) + "，请检查你的配置文件！"
     traceback.print_exc()
+    send("随机定时", msg)
 except KeyError:
     msg = "配置错误，请检查你的配置文件！"
     traceback.print_exc()

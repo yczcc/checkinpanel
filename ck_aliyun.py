@@ -6,21 +6,17 @@ new Env('阿里云盘');
 """
 
 import json
-from sys import stdout
-
 import requests
+import os
+from sys import exit, stdout
 
 from notify_mtr import send
 from utils import get_data
 
-
 ##变量export ali_refresh_token=''
 # ali_refresh_token=os.getenv("ali_refresh_token").split('&')
-# refresh_token是一成不变的呢，我们使用它来更新签到需要的access_token
-# refresh_token获取教程：https://github.com/bighammer-link/Common-scripts/wiki/%E9%98%BF%E9%87%8C%E4%BA%91%E7%9B%98refresh_token%E8%8E%B7%E5%8F%96%E6%96%B9%E6%B3%95
-# refresh_token获取教程：
-# 一、进入到阿里云盘官网并且成功登录 https://www.alipan.com/drive
-# 二、按F12，进入开发者工具模式，在顶上菜单栏点 Application ，然后在左边菜单找到 Local storage 下面的 https://www.alipan.com/ 这个域名，点到这个域名会看到有一个 key为 token 选项，再点 token (json串)，就找到 json中key为 refresh_token的值就是。
+#refresh_token是一成不变的呢，我们使用它来更新签到需要的access_token
+#refresh_token获取教程：https://github.com/bighammer-link/Common-scripts/wiki/%E9%98%BF%E9%87%8C%E4%BA%91%E7%9B%98refresh_token%E8%8E%B7%E5%8F%96%E6%96%B9%E6%B3%95
 # ali_refresh_token = os.getenv("ali_refresh_token")
 
 class ALiYun:
@@ -61,9 +57,9 @@ class ALiYun:
                 return [{"name": "签到&奖励", "value": msg}]
             sign_days = result_sign["result"]["signInCount"]
             data = {"signInDay": sign_days}
-            url_reward = "https://member.aliyundrive.com/v1/activity/sign_in_reward"
+            url_reward = "https://member.aliyundrive.com/v1/activity/sign_in_goods"
             result_reward = requests.post(url=url_reward, headers=headers, data=json.dumps(data)).json()
-            if "success" in result_reward or not result_reward["success"]:
+            if "success" in result_reward and result_reward.get("success"):
                 self.print_now("签到成功")
                 msg = [
                     {
@@ -73,14 +69,14 @@ class ALiYun:
                     {
                         "name": "获得奖励",
                         "value": "{},{},{}".format(
-                            result_reward["result"]["description"],
-                            result_reward["result"]["notice"],
-                            result_reward["result"]["subNotice"])
+                            result_reward["result"]["goodsName"],
+                            result_reward["result"]["rewardName"],
+                            result_reward["result"]["rewardDesc"])
                     }
                 ]
                 return msg
             else:
-                msg = "签到成功，查询奖励失败，" + result_reward["message"]
+                msg = "签到成功，连续签到" + str(sign_days) + "天，查询奖励失败，" + result_reward["message"]
                 self.print_now(msg)
                 return [{"name": "签到&奖励", "value": msg}]
         except Exception as e:
@@ -104,13 +100,12 @@ class ALiYun:
             msg_all += msg + '\n'
         return msg_all
 
-
 if __name__ == "__main__":
     _data = get_data()
     _check_items = _data.get("ALIYUN", [])
 
     # _check_items = [{
-    # "refresh_token" : ""
+        # "refresh_token" : ""
     # }]
     result = ALiYun(check_items=_check_items).main()
     send("阿里云盘", result)
