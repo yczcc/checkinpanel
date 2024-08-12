@@ -3,6 +3,8 @@
 cron: 7 11 * * *
 new Env('掘金');
 """
+import datetime
+import time
 
 import requests
 from sys import stdout
@@ -60,6 +62,59 @@ class Juejin:
             self.print_now(e)
         return [-1, msg]
 
+    # 获取签到矿石数
+    def getSignPointCount(self, cookie, uuid):
+        msg = " * 签到矿石数:" + '\n\t'
+        url = f"{self.base_url}growth_api/v1/get_by_month?aid=2608&uuid={uuid}&spider=0"
+        try:
+            day_time = int(time.mktime(datetime.date.today().timetuple()))
+            res = requests.get(url=url, headers=self.headers, cookies={"Cookie": cookie}).json()
+            if 0 == res.get('err_no'):
+                resData = res.get('data')
+                get_cur_day = False
+                point_cur_day = 0
+                for resDataPoint in resData:
+                    if not 'date' in resDataPoint or not 'status' in resDataPoint or not 'point' in resDataPoint:
+                        msg += "获取矿石数失败," + res.get("err_msg")
+                        return [0, msg]
+                    if 1 != resDataPoint.get('status') or day_time != resDataPoint.get('date'):
+                        continue
+                    point_cur_day = resDataPoint.get('point')
+                    get_cur_day = True
+                    break
+                if not get_cur_day:
+                    msg += "获取矿石数失败,未获取到今天的矿石数"
+                    return [0, msg]
+                msg += ("今日签到获取" + str(point_cur_day))
+                return [0, msg]
+            msg += "获取失败," + res.get('err_msg')
+        except Exception as e:
+            msg += "获取异常"
+            self.print_now(msg)
+            self.print_now(e)
+        return [-1, msg]
+
+    # 获取签到天数
+    def getSignDayCount(self, cookie, uuid):
+        msg = " * 签到天数:" + '\n\t'
+        url = f"{self.base_url}growth_api/v1/get_counts?aid=2608&uuid={uuid}&spider=0"
+        try:
+            res = requests.get(url=url, headers=self.headers, cookies={"Cookie": cookie}).json()
+            if 0 == res.get('err_no'):
+                resData = res.get('data')
+                if not 'cont_count' in resData or not 'sum_count' in resData:
+                    msg += "获取天数失败," + res.get("err_msg")
+                    return [0, msg]
+                msg += ("连续" + str(resData.get('cont_count')) + "天,累计"
+                        + str(resData.get('sum_count')) + "天")
+                return [0, msg]
+            msg += "获取失败," + res.get('err_msg')
+        except Exception as e:
+            msg += "获取异常"
+            self.print_now(msg)
+            self.print_now(e)
+        return [-1, msg]
+
     # 获取程序员日历
     def getCoderCalendar(self, cookie, uuid):
         msg = " * 程序员日历:" + '\n\t'
@@ -86,7 +141,7 @@ class Juejin:
             resSign = requests.post(url=sign_url, headers=self.headers, cookies={"Cookie": cookie}).json()
             if 0 == resSign.get('err_no'):
                 resSignData = resSign.get('data')
-                msg += "签到成功\n\t签到矿石数" + resSignData['incr_point'] + "\n\t目前总矿石数" + resSignData['sum_point']
+                msg += "签到成功\n\t签到矿石数" + str(resSignData['incr_point']) + "\n\t目前总矿石数" + str(resSignData['sum_point'])
                 return [True, msg]
             msg += "获取失败," + resSign.get('err_msg')
         except Exception as e:
@@ -95,10 +150,45 @@ class Juejin:
             self.print_now(e)
         return [False, msg]
 
+    # 获取幸运值
+    def my_lucky(self, cookie, uuid):
+        msg = ' * 获取幸运值:' + '\n\t'
+        lottery_url = f"{self.base_url}growth_api/v1/lottery_lucky/my_lucky?aid=2608&uuid={uuid}&spider=0"
+        try:
+            resLucky = requests.post(url=lottery_url, headers=self.headers, cookies={"Cookie": cookie}).json()
+            if 0 == resLucky.get('err_no'):
+                resLuckyData = resLucky.get('data')
+                if not 'total_value' in resLuckyData:
+                    msg += "解析幸运值失败," + resLucky.get("err_msg")
+                    return [False, msg]
+                msg += ("当前幸运值" + str(resLuckyData.get('total_value')) + "/6000")
+                return [True, msg]
+            msg += "获取幸运值失败," + resLucky.get('err_msg')
+        except Exception as e:
+            msg += "获取幸运值异常"
+            self.print_now(msg)
+            self.print_now(e)
+        return [False, msg]
+
     # 抽奖
     def lottery(self, cookie, uuid):
+        msg = ' * 抽奖:' + '\n\t'
         lottery_url = f"{self.base_url}growth_api/v1/lottery/draw?aid=2608&uuid={uuid}&spider=0"
-        return requests.post(url=lottery_url, headers=self.headers, cookies={"Cookie": cookie}).json()
+        try:
+            res = requests.post(url=lottery_url, headers=self.headers, cookies={"Cookie": cookie}).json()
+            if 0 == res.get('err_no'):
+                resData = res.get('data')
+                if not 'lottery_name' in resData:
+                    msg += "解析抽奖失败," + res.get("err_msg")
+                    return [False, msg]
+                msg += ("抽奖获得【" + resData.get('lottery_name') + "】")
+                return [True, msg]
+            msg += "抽奖失败," + res.get('err_msg')
+        except Exception as e:
+            msg += "抽奖异常"
+            self.print_now(msg)
+            self.print_now(e)
+        return [False, msg]
 
     def main(self):
         msg_all = ""
@@ -120,15 +210,24 @@ class Juejin:
                 continue
             elif 1 == resGetSignStatus[0]:
                 msg_all += resGetSignStatus[1] + '\n'
+                resPointCount = self.getSignPointCount(cookie, user_unique_id)
+                msg_all += resPointCount[1] + '\n'
+                resDayCount = self.getSignDayCount(cookie, user_unique_id)
+                msg_all += resDayCount[1] + '\n'
             elif 0 == resGetSignStatus[0]:
                 msg_all += resGetSignStatus[1] + '\n'
                 resDoSign = self.doSign(cookie, user_unique_id)
                 msg_all += resDoSign[1] + '\n'
                 if resDoSign[0]:
                     # 签到成功
-                    lottery_msg = self.lottery(cookie,user_unique_id)["err_msg"]
-                    msg_all += ' * 抽奖任务:' + '\n\t' + "抽奖结果:" + lottery_msg + "\n"
-
+                    myLuckyRes = self.my_lucky(cookie,user_unique_id)
+                    msg_all += myLuckyRes[1] + '\n'
+                    lotteryRes = self.lottery(cookie,user_unique_id)
+                    msg_all += lotteryRes[1] + '\n'
+                resPointCount = self.getSignPointCount(cookie, user_unique_id)
+                msg_all += resPointCount[1] + '\n'
+                resDayCount = self.getSignDayCount(cookie, user_unique_id)
+                msg_all += resDayCount[1] + '\n'
             resGetCoderCalendar = self.getCoderCalendar(cookie, user_unique_id)
             msg_all += resGetCoderCalendar[1] + '\n'
             msg_all += '\n'
