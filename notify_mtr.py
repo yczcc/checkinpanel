@@ -83,6 +83,7 @@ push_config = {
     'QMSG_TYPE': '',                # qmsg 酱的 QMSG_TYPE
 
     'QYWX_AM': '',                  # 企业微信应用
+    'QYWX_AM_ERROR': '',            # 企业微信应用（错误消息）
 
     'QYWX_KEY': '',                 # 企业微信机器人
 
@@ -94,6 +95,7 @@ push_config = {
     'TG_PROXY_PORT': '',            # tg 机器人的 TG_PROXY_PORT
 }
 notify_function = []
+notify_error = False
 # fmt: on
 
 # 首先读取 面板变量 或者 github action 运行变量
@@ -384,12 +386,15 @@ def qmsg_bot(title: str, content: str) -> None:
 
 def wecom_app(title: str, content: str) -> None:
     """通过 企业微信 APP 推送消息。"""
-    if not push_config.get("QYWX_AM"):
-        print("QYWX_AM 未设置!!\n取消推送")
+    config_key = "QYWX_AM"
+    if notify_error:
+        config_key = "QYWX_AM_ERROR"
+    if not push_config.get(config_key):
+        print(config_key + " 未设置!!\n取消推送")
         return
-    QYWX_AM_AY = re.split(",", push_config.get("QYWX_AM"))
+    QYWX_AM_AY = re.split(",", push_config.get(config_key))
     if 4 < len(QYWX_AM_AY) > 5:
-        print("QYWX_AM 设置错误!!\n取消推送")
+        print(config_key + " 设置错误!!\n取消推送")
         return
     print("企业微信 APP 服务启动")
 
@@ -600,10 +605,13 @@ default_hook = threading.excepthook
 threading.excepthook = excepthook
 
 
-def send(title: str, content: str) -> None:
+def send(title: str, content: str, error: bool = False) -> None:
     if not content:
         print(f"{title} 推送内容为空！")
         return
+
+    global notify_error
+    notify_error = error
 
     hitokoto = push_config.get("HITOKOTO")
 

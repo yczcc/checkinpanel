@@ -11,20 +11,27 @@ import requests
 from notify_mtr import send
 from utils import get_data
 
+error = False
 
 class YouDao:
     def __init__(self, check_items):
         self.check_items = check_items
 
     @staticmethod
-    def get_space(cookie):
+    def get_space(cookie) -> [bool, str]:
         url = "https://note.youdao.com/yws/mapi/user?method=get"
         headers = {"Cookie": cookie}
         res = requests.get(url=url, headers=headers).json()
-        return 0 if res.get("q") is None else res.get("q")
+        if 'error' in res:
+            return [False, 'error=' + res.get('error') if res.get('message') is None else res.get('message')]
+        return [True, 0 if res.get("q") is None else res.get("q")]
 
-    def sign(self, cookie):
-        msg = f"签到前空间: {int(self.get_space(cookie))//1048576}M\n"
+    def sign(self, cookie) -> [bool, str]:
+        success = True
+        resSpace = self.get_space(cookie)
+        if not resSpace[0]:
+            return [False, resSpace[1]]
+        msg = f"签到前空间: {int(resSpace[1])//1048576}M\n"
         ad = 0
 
         headers = {"Cookie": cookie}
@@ -66,14 +73,18 @@ class YouDao:
                 msg += f"获得空间：{space}M, 总空间：{int(s)//1048576}M"
         else:
             msg += f"错误 {str(r2.json())}"
-        return msg
+            success = False
+        return [success, msg]
 
     def main(self):
+        global error
         msg_all = ""
         for check_item in self.check_items:
             cookie = check_item.get("cookie")
-            msg = self.sign(cookie)
-            msg_all += msg + "\n\n"
+            res = self.sign(cookie)
+            if not res[0]:
+                error = True
+            msg_all += res[1] + "\n\n"
         return msg_all
 
 
@@ -81,4 +92,4 @@ if __name__ == "__main__":
     _data = get_data()
     _check_items = _data.get("YOUDAO", [])
     result = YouDao(check_items=_check_items).main()
-    send("有道云笔记", result)
+    send("有道云笔记", result, error)

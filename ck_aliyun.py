@@ -7,8 +7,7 @@ new Env('阿里云盘');
 
 import json
 import requests
-import os
-from sys import exit, stdout
+from sys import stdout
 
 from notify_mtr import send
 from utils import get_data
@@ -19,6 +18,8 @@ from utils import get_data
 #refresh_token获取教程：https://github.com/bighammer-link/Common-scripts/wiki/%E9%98%BF%E9%87%8C%E4%BA%91%E7%9B%98refresh_token%E8%8E%B7%E5%8F%96%E6%96%B9%E6%B3%95
 # ali_refresh_token = os.getenv("ali_refresh_token")
 
+error = False
+
 class ALiYun:
     def __init__(self, check_items):
         self.check_items = check_items
@@ -27,7 +28,7 @@ class ALiYun:
         print(content)
         stdout.flush()
 
-    def update_token(self, refresh_token):
+    def update_token(self, refresh_token) -> [bool, str]:
         url = "https://auth.aliyundrive.com/v2/account/token"
         data = {
             "grant_type": "refresh_token",
@@ -45,7 +46,8 @@ class ALiYun:
             self.print_now(e)
         return [False, "更新token异常，请检查refresh_token是否有效"]
 
-    def sign(self, access_token):
+    def sign(self, access_token) -> [bool, list]:
+        success = True
         url = "https://member.aliyundrive.com/v1/activity/sign_in_list"
         headers = {"Authorization": access_token, "Content-Type": "application/json"}
         data = {"isReward": False}
@@ -54,14 +56,14 @@ class ALiYun:
             if "success" not in result_sign or not result_sign["success"]:
                 msg = "签到失败，" + result_sign["message"]
                 self.print_now(msg)
-                return [{"name": "签到&奖励", "value": msg}]
+                return [False, [{"name": "签到&奖励", "value": msg}]]
             sign_days = result_sign["result"]["signInCount"]
             data = {"signInDay": sign_days}
             url_reward = "https://member.aliyundrive.com/v1/activity/sign_in_goods"
             result_reward = requests.post(url=url_reward, headers=headers, data=json.dumps(data)).json()
             if "success" in result_reward and result_reward.get("success"):
                 self.print_now("签到成功")
-                msg = [
+                res = [
                     {
                         "name": "连续签到",
                         "value": str(sign_days) + "天",
@@ -74,17 +76,19 @@ class ALiYun:
                             result_reward["result"]["rewardDesc"])
                     }
                 ]
-                return msg
             else:
                 msg = "签到成功，连续签到" + str(sign_days) + "天，查询奖励失败，" + result_reward["message"]
                 self.print_now(msg)
-                return [{"name": "签到&奖励", "value": msg}]
+                res = [{"name": "签到&奖励", "value": msg}]
         except Exception as e:
             self.print_now("签到或者查询奖励异常")
             self.print_now(e)
-        return [{"name": "签到&奖励", "value": "签到或者查询奖励异常，请检查refresh_token是否有效"}]
+            res = [{"name": "签到&奖励", "value": "签到或者查询奖励异常，请检查refresh_token是否有效"}]
+            success = False
+        return [success, res]
 
     def main(self):
+        global error
         msg_all = ""
         i = 0
         for check_item in self.check_items:
@@ -93,9 +97,13 @@ class ALiYun:
             refresh_token = check_item["refresh_token"]
             access_token = self.update_token(refresh_token)
             if access_token[0]:
-                msg = self.sign(access_token[1])
+                res = self.sign(access_token[1])
+                if not res[0]:
+                    error = True
+                msg = res[1]
             else:
                 msg = [{"name": "更新token", "value": access_token[1]}]
+                error = True
             msg = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg])
             msg_all += msg + '\n'
         return msg_all
@@ -108,4 +116,4 @@ if __name__ == "__main__":
         # "refresh_token" : ""
     # }]
     result = ALiYun(check_items=_check_items).main()
-    send("阿里云盘", result)
+    send("阿里云盘", result, error)

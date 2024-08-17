@@ -12,6 +12,7 @@ from sys import stdout
 from notify_mtr import send
 from utils import get_data
 
+error = False
 
 class Juejin:
     def __init__(self, check_items):
@@ -27,9 +28,9 @@ class Juejin:
         stdout.flush()
 
     # 获取当前矿石数
-    def getCurPoint(self, cookie, uuid):
+    def getCurPoint(self, cookie, uuid, msToken, a_bogus):
         msg = " * 当前矿石:" + '\n\t'
-        url = f"{self.base_url}growth_api/v1/get_cur_point?aid=2608&uuid={uuid}&spider=0"
+        url = f"{self.base_url}growth_api/v1/get_cur_point?aid=2608&uuid={uuid}&spider=0&msToken=" + msToken + "&a_bogus=" + a_bogus
         try:
             resSignStatus = requests.get(url=url, headers=self.headers, cookies={"Cookie": cookie}).json()
             if 0 == resSignStatus.get('err_no'):
@@ -134,18 +135,18 @@ class Juejin:
         return [False, msg]
 
     # 签到
-    def doSign(self, cookie, uuid):
+    def doSign(self, cookie, uuid, msToken, a_bogus) -> [bool, str]:
         msg = ' * 签到任务:' + '\n\t'
-        sign_url = f"{self.base_url}growth_api/v1/check_in?aid=2608&uuid={uuid}&spider=0"
+        sign_url = f"{self.base_url}growth_api/v1/check_in?aid=2608&uuid={uuid}&spider=0&msToken=" + msToken + "&a_bogus=" + a_bogus
         try:
             resSign = requests.post(url=sign_url, headers=self.headers, cookies={"Cookie": cookie}).json()
             if 0 == resSign.get('err_no'):
                 resSignData = resSign.get('data')
                 msg += "签到成功\n\t签到矿石数" + str(resSignData['incr_point']) + "\n\t目前总矿石数" + str(resSignData['sum_point'])
                 return [True, msg]
-            msg += "获取失败," + resSign.get('err_msg')
+            msg += "签到失败," + resSign.get('err_msg')
         except Exception as e:
-            msg += "获取异常"
+            msg += "签到异常"
             self.print_now(msg)
             self.print_now(e)
         return [False, msg]
@@ -192,14 +193,18 @@ class Juejin:
 
     def main(self):
         msg_all = ""
+        global error
         for i, check_item in enumerate(self.check_items, start=1):
             cookie = str(check_item.get("cookie"))
             user_unique_id = str(check_item.get("user_unique_id"))
+            ms_token = str(check_item.get("ms_token"))
+            a_bogus = str(check_item.get("a_bogus"))
             msg_all += f"账号 {i}" + '\n'
-            resCurPoint = self.getCurPoint(cookie, user_unique_id)
+            resCurPoint = self.getCurPoint(cookie, user_unique_id, ms_token, a_bogus)
             if not resCurPoint[0]:
                 # 请求异常了
                 msg_all += resCurPoint[1] + '\n'
+                error = True
                 continue
             msg_all += resCurPoint[1] + '\n'
 
@@ -207,6 +212,7 @@ class Juejin:
             if resGetSignStatus[0] < 0:
                 # 请求异常了
                 msg_all += resGetSignStatus[1] + '\n'
+                error = True
                 continue
             elif 1 == resGetSignStatus[0]:
                 msg_all += resGetSignStatus[1] + '\n'
@@ -224,6 +230,8 @@ class Juejin:
                     msg_all += myLuckyRes[1] + '\n'
                     lotteryRes = self.lottery(cookie,user_unique_id)
                     msg_all += lotteryRes[1] + '\n'
+                else:
+                    error = True
                 resPointCount = self.getSignPointCount(cookie, user_unique_id)
                 msg_all += resPointCount[1] + '\n'
                 resDayCount = self.getSignDayCount(cookie, user_unique_id)
@@ -238,4 +246,4 @@ if __name__ == "__main__":
     _data = get_data()
     _check_items = _data.get("JUEJIN", [])
     result = Juejin(check_items=_check_items).main()
-    send("掘金", result)
+    send("掘金", result, error)

@@ -35,7 +35,6 @@ def print_now(content):
     print(content)
     stdout.flush()
 
-
 class Encrypt:
     def __init__(self, key, iv):
         self.key = key.encode('utf-8')
@@ -71,6 +70,7 @@ class Encrypt:
         text = cipher.decrypt(content).decode('utf-8')
         return text.rstrip(self.coding)
 
+error = False
 
 # 获取i茅台的最新版本号
 def getMtVersion():
@@ -330,8 +330,9 @@ class IMaoTai:
         return params
 
     # 申购预约
-    def reservation(self, params: dict, mobile: str) -> dict:
+    def reservation(self, params: dict, mobile: str) -> [bool, dict[str, str]]:
         resMsg = {"name": " * 申购结果", "value": ''}
+        success = True
         resMsgValue = '\n\t'
         timestamp_ms = int(time.time() * 1000)
         params.pop('userId')
@@ -345,7 +346,7 @@ class IMaoTai:
                 print_now(msg)
                 resMsgValue += msg
                 resMsg['value'] = resMsgValue
-                return resMsg
+                return [False, resMsg]
             resJson = res.json()
             if 'code' in resJson:
                 resJsonCode = resJson['code']
@@ -359,17 +360,19 @@ class IMaoTai:
                     if 'message' in resJson:
                         msg += ',message=' + resJson["message"]
                     msg += ')'
+                    success = False
                 print_now(msg)
                 resMsgValue += msg
                 resMsg['value'] = resMsgValue
-                return resMsg
+                return [success, resMsg]
         except Exception as e:
             msg = "申购请求异常 最大可能是token失效了 也可能是网络问题"
             print_now(msg)
             print_now(e)
             resMsgValue += msg
             resMsg['value'] = resMsgValue
-        return resMsg
+            success = False
+        return [success, resMsg]
 
     # 获取门店数据
     def get_shop_data(self, lat: str = '28.499562', lng: str = '102.182324'):
@@ -528,8 +531,9 @@ class IMaoTai:
         return resMsg
 
     # 获取预约申请信息列表
-    def getReservationList(self) -> dict:
+    def getReservationList(self) -> [bool, dict]:
         resMsg = {"name": " * 申购结果", "value": ''}
+        success = True
         resMsgValue = '\n\t'
         timestamp_ms = int(time.time() * 1000)
         dict.update(self.HEADERS, {"MT-K": f'{timestamp_ms}'})
@@ -542,14 +546,14 @@ class IMaoTai:
                 print_now(msg)
                 resMsgValue += msg
                 resMsg['value'] = resMsgValue
-                return resMsg
+                return [False, resMsg]
             resQueryCode = resQueryList.json()['code']
             if 2000 != resQueryCode:
                 msg = '解析申购列表失败(code=' + str(resQueryCode) + ')'
                 print_now(msg)
                 resMsgValue += msg
                 resMsg['value'] = resMsgValue
-                return resMsg
+                return [False, resMsg]
             reservationItemVOS = resQueryList.json()['data']['reservationItemVOS']
             idx = 1
             # 当天
@@ -572,19 +576,21 @@ class IMaoTai:
             print_now(msg)
             resMsgValue += msg
             resMsg['value'] = resMsgValue
-        return resMsg
+            success = False
+        return [success, resMsg]
 
     # 执行申购预约
-    def runReservation(self):
+    def runReservation(self) -> [bool, str]:
         msg = ''
         time_now = datetime.datetime.now().time()
         if datetime.time(9, 00) > time_now or time_now > datetime.time(10, 00):
             msg += '不在申购时间段内'
-            return msg
+            return [True, msg]
 
         # 获取当日session id
         self.get_current_session_id()
 
+        success = True
         for check_user in self.check_items:
             self.MOBILE = check_user.get('mobile')
             self.TOKEN = check_user.get('token')
@@ -626,9 +632,13 @@ class IMaoTai:
                     })
                     reservation_params = self.act_params(max_shop_id, item)
                     resReservation = self.reservation(reservation_params, self.MOBILE)
-                    msg_user.append(resReservation)
-                    resAward = self.getXmyUserEnergyAward()
-                    msg_user.append(resAward)
+                    msg_user.append(resReservation[1])
+                    if not resReservation[0]:
+                        # 申购失败
+                        success = False
+                    else:
+                        resAward = self.getXmyUserEnergyAward()
+                        msg_user.append(resAward)
             except BaseException as e:
                 print_now(e)
                 msg_user.append(
@@ -637,16 +647,18 @@ class IMaoTai:
                         "value": self.MOBILE + '申购预约失败',
                     }
                 )
+                success = False
             msg_user = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg_user])
             msg += msg_user + '\n\n'
-        return msg
+        return [success, msg]
 
     # 执行获取预约详情
-    def runGetReservation(self):
+    def runGetReservation(self) -> [bool, str]:
         msg = ''
         # 获取当日session id
         self.get_current_session_id()
 
+        success = True
         for check_user in self.check_items:
             self.MOBILE = check_user.get('mobile')
             self.TOKEN = check_user.get('token')
@@ -670,20 +682,29 @@ class IMaoTai:
 
             self.initHeaders(user_id=str(self.USER_ID), token=self.TOKEN, lat=lat, lng=lng)
             resReservation = self.getReservationList()
-            msg_user.append(resReservation)
+            msg_user.append(resReservation[1])
+            if not resReservation[0]:
+                success = False
             msg_user = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg_user])
             msg += msg_user + '\n\n'
-        return msg
+        return [success, msg]
 
     def main(self, param_type: int):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         msg = "申购预约任务\n" + now + '\n'
-
+        global error
         if 1 == param_type:
-            msg += self.runReservation()
+            res = self.runReservation()
+            if not res[0]:
+                error = True
+            msg += res[1]
         elif 2 == param_type:
-            msg += self.runGetReservation()
+            res = self.runGetReservation()
+            if not res[0]:
+                error = True
+            msg += res[1]
         else:
+            error = True
             msg += "运行参数错误,param_type=" + str(param_type)
         return msg
 
@@ -696,7 +717,7 @@ if __name__ == '__main__':
     data = get_data()
     _check_items = data.get("IMAOTAI", [])
     if len(_check_items) < 1:
-        send("i茅台", "IMAOTAI配置错误")
+        send("i茅台", "IMAOTAI配置错误", error)
         exit(0)
     # _check_items = [{
     #     'mobile': '1',
@@ -709,7 +730,7 @@ if __name__ == '__main__':
     #     'lng': '117.313567',
     # }]
     result = IMaoTai(check_items=_check_items).main(param)
-    send("i茅台", result)
+    send("i茅台", result, error)
     # result = IMaoTai(check_items=_check_items).main(2)
     # print_now(result)
     exit(0)
